@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "782218289958",
+    "project_id": "library-saas-f2c71",
+    "storage_bucket": "library-saas-f2c71.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:782218289958:android:3fd2db878fe9aabebe17e7",
+        "android_client_info": {
+          "package_name": "com.librarysaas"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDSwM7RuZN1kFZbuFlOwmxlNCMFMkHqQUs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
