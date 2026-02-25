@@ -1,10 +1,19 @@
-import { View, Text, FlatList, StyleSheet } from 'react-native';
+import {
+  View,
+  Text,
+  FlatList,
+  StyleSheet,
+  RefreshControl,
+  ActivityIndicator,
+} from 'react-native';
 import React from 'react';
 import SafeAreaViewContainer from '../../../components/layout/SafeAreaViewContainer';
 import Header from '../../../components/ui/Header';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useGetStudents } from '../studentQueries/studentQueries';
 import { fontFamily } from '../../../constants/fonts';
+import { ScrollView } from 'react-native-gesture-handler';
+import FontAwesome6 from '@react-native-vector-icons/fontawesome6';
 const PRIMARY = '#6366F1';
 const PRIMARY_LIGHT = '#818CF8';
 const PRIMARY_DARK = '#4F46E5';
@@ -13,7 +22,9 @@ const ListOfStudents = () => {
   const route = useRoute();
   const { libraryId } = route?.params;
   const navigation = useNavigation();
-  const { data } = useGetStudents(libraryId);
+  const { data, isRefetching, refetch, isLoading } = useGetStudents(libraryId);
+  console.log('Data', data);
+
   const capitalize = str => {
     if (!str) return '';
     return str.charAt(0).toUpperCase() + str.slice(1);
@@ -92,16 +103,50 @@ const ListOfStudents = () => {
     );
   };
 
-  console.log('Data', data);
   const ItemSeparator = () => {
     return <View style={{ height: 12 }} />;
   };
+  if (data?.students?.length === 0) {
+    return (
+      <SafeAreaViewContainer>
+        <ScrollView
+          refreshControl={
+            <RefreshControl refreshing={isRefetching} onRefresh={refetch} />
+          }
+        >
+          <Header title="All students" navigation={navigation} />
+          <View style={styles.emptyContainer}>
+            <FontAwesome6
+              iconStyle="solid"
+              name="file-invoice-dollar"
+              size={64}
+              color="#9ca3af"
+            />
+            <Text style={styles.emptyTitle}>No Students Yet</Text>
+            <Text style={styles.emptyMessage}>
+              Start managing students by adding your first student
+            </Text>
+          </View>
+        </ScrollView>
+      </SafeAreaViewContainer>
+    );
+  }
+  if (isLoading) {
+    return (
+      <SafeAreaViewContainer>
+        <View style={styles.centerContainer}>
+          <ActivityIndicator size="large" color="#3b82f6" />
+          <Text style={styles.loadingText}>Loading Students...</Text>
+        </View>
+      </SafeAreaViewContainer>
+    );
+  }
   return (
     <SafeAreaViewContainer>
       <Header title="All Students" navigation={navigation} />
       <FlatList
         data={data?.students}
-        keyExtractor={item => item._id?.toString()}
+        keyExtractor={item => item.studentId?.toString()}
         renderItem={renderStudentCard}
         ItemSeparatorComponent={ItemSeparator}
       />
@@ -111,6 +156,19 @@ const ListOfStudents = () => {
 
 export default ListOfStudents;
 const styles = StyleSheet.create({
+  centerContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 16,
+    backgroundColor: '#fff',
+  },
+  loadingText: {
+    fontSize: 16,
+    fontFamily: fontFamily.MONTSERRAT.medium,
+    opacity: 0.7,
+    color: '#000',
+  },
   card: {
     backgroundColor: '#FFFFFF',
     borderRadius: 20,
@@ -262,5 +320,23 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: PRIMARY_DARK,
     letterSpacing: 0.2,
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    paddingVertical: 64,
+    gap: 12,
+  },
+  emptyTitle: {
+    fontSize: 20,
+    fontFamily: fontFamily.MONTSERRAT.semiBold,
+    marginTop: 16,
+    color: '#000',
+  },
+  emptyMessage: {
+    fontSize: 14,
+    fontFamily: fontFamily.MONTSERRAT.regular,
+    opacity: 0.7,
+    textAlign: 'center',
+    color: '#000',
   },
 });

@@ -40,3 +40,28 @@ export const udpatePassword = async passwordData => {
     throw new Error(error?.response?.data?.error);
   }
 };
+
+export const getLibraryDetails = async libraryId => {
+  try {
+    const response = await apiClientWithAuth.get(
+      ENDPOINTS.LIBRARIES.OVERVIEW(libraryId),
+    );
+    return response?.data;
+  } catch (error) {
+    console.error('Error getting library details', error.response.data.error);
+    throw new Error(error?.response?.data?.error);
+  }
+};
+
+export const updateLibraryDetails = async libraryUpdateData => {
+  try {
+    const response = await apiClientWithAuth.patch(
+      ENDPOINTS.LIBRARIES.UPDATE_LIBRARY,
+      libraryUpdateData,
+    );
+    return response?.data;
+  } catch (error) {
+    console.error('Error updating library details', error.response.data.error);
+    throw new Error(error?.response?.data?.error);
+  }
+};

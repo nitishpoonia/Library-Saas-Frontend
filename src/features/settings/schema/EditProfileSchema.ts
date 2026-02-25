@@ -14,3 +14,20 @@ export const editProfileSchema = yup.object({
     .nullable()
     .notRequired(),
 });
+
+export const editLibrarySchema = yup.object({
+  name: yup
+    .string()
+    .min(3, 'Name must be at least 3 characters')
+    .required('Name is required'),
+  address: yup
+    .string()
+    .min(3, 'Address must be at least 3 characters')
+    .required('Address is required'),
+  seats: yup
+    .number()
+    .typeError('Seats must be a number')
+    .positive('Seats must be greater than 0')
+    .integer('Seats must be a whole number')
+    .required('Seats are required'),
+});

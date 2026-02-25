@@ -247,6 +247,7 @@ const SignUp = () => {
             onPress={() =>
               navigation.reset({ index: 0, routes: [{ name: 'SignIn' }] })
             }
+            disabled={isPending}
           >
             <Text style={CommonStyles.linkText}>Login</Text>
           </TouchableOpacity>

@@ -1,22 +1,23 @@
 export const ENDPOINTS = {
   AUTH: {
-    SIGN_IN: "/owners/login",
-    SIGN_UP: "/owners/signup",
+    SIGN_IN: '/owners/login',
+    SIGN_UP: '/owners/signup',
   },
   LIBRARIES: {
-    CREATE: "/libraries",
+    CREATE: '/libraries',
     OVERVIEW: (libraryId: number) => `/libraries/${libraryId}/overview`,
-    ALL_LIBRARIES: "/libraries/my-libraries",
+    ALL_LIBRARIES: '/libraries/my-libraries',
+    UPDATE_LIBRARY: '/libraries/update-library-details',
   },
   DASHBOARD: {
     OVERVIEW: (libraryId: number) =>
       `/libraries/${libraryId}/dashboard-overview`,
   },
   STUDENT: {
-    ADD: "/libraries/student/add-student",
+    ADD: '/libraries/student/add-student',
     LIST_OF_STUDENT: (libraryId: number) =>
       `/libraries/student/${libraryId}/all-students`,
-    DELETE: "/libraries/student/delete-student",
+    DELETE: '/libraries/student/delete-student',
   },
   EXPENSE: {
     ADD: (libraryId: number) => `/libraries/${libraryId}/add-expense`,
@@ -29,9 +30,13 @@ export const ENDPOINTS = {
   },
 
   PROFILE: {
-    GET_USER_PROFILE: "/profile/my-profile",
-    UPDATE_USER_PROFILE: "/profile/update-profile",
-    CHANGE_PASSWORD: "/profile/change-password",
+    GET_USER_PROFILE: '/profile/my-profile',
+    UPDATE_USER_PROFILE: '/profile/update-profile',
+    CHANGE_PASSWORD: '/profile/change-password',
+  },
+  HELPFULINFO: {
+    OVERDUE_STUDENT_LIST: '/libraries/student/overdue',
+    EXPIRING_SOON: 'libraries/student/expiringSoon'
   },
 } as const;
 

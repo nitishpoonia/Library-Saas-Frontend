@@ -8,11 +8,10 @@ import {
 } from '../service/studentService';
 
 export function useAddStudent() {
-  console.log('Inside the useAddStudent');
-
   return useMutation({
-    mutationFn: payload => addStudent(payload),
-    onSuccess: variables => {
+    mutationFn: (payload: any) => addStudent(payload),
+
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({
         queryKey: ['dashboardOverview', variables.library_id],
       });

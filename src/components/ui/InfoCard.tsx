@@ -56,7 +56,7 @@ const styles = StyleSheet.create({
     fontFamily: fontFamily.MONTSERRAT.semiBold,
   },
   cardValue: {
-    fontSize: 24,
+    fontSize: 20,
     fontFamily: fontFamily.MONTSERRAT.bold,
 
     color: '#1f2937',

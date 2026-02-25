@@ -12,10 +12,19 @@ type student = {
 };
 
 export async function addStudent(studentData: student) {
-  const res = await apiClientWithAuth.post(ENDPOINTS.STUDENT.ADD, studentData);
-  console.log('Res of addStudent', res.data);
+  console.log('Student data', studentData);
 
-  return res.data;
+  try {
+    const res = await apiClientWithAuth.post(
+      ENDPOINTS.STUDENT.ADD,
+      studentData,
+    );
+    console.log('Res of addStudent', res.data);
+
+    return res.data;
+  } catch (error) {
+    console.error('Error adding student', error?.response);
+  }
 }
 
 export async function getStudentList(libraryId: number) {

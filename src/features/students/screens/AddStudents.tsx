@@ -206,6 +206,8 @@ const AddStudentScreen = () => {
         queryClient.invalidateQueries({
           queryKey: ['dashboardOverview'],
         });
+        resetForm();
+        navigation.goBack();
       },
       onError: (error: any) => {
         console.error('Error adding student:', error.message);

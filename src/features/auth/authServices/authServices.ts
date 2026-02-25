@@ -17,7 +17,7 @@ export const login = async (payload: any): Promise<LoginResponse> => {
 
     return response.data;
   } catch (error: any) {
-    console.error('Error while logging in the user', error);
+    console.error('Error while logging in the user', error?.response?.data);
     throw new Error(error?.response?.data?.error);
   }
 };

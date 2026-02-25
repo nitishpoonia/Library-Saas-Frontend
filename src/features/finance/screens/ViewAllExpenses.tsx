@@ -189,9 +189,7 @@ const ListAllExpenses = () => {
     );
   }
 
-  // ── Render ──
   const renderExpenseCard = ({ item }: { item: Expense }) => {
-    console.log('Item', item);
 
     return (
       <View style={styles.expenseCard}>
@@ -220,7 +218,6 @@ const ListAllExpenses = () => {
     );
   };
 
-  // Sticky date header with daily total
   const renderSectionHeader = ({ section }: { section: Section }) => (
     <View style={styles.sectionHeader}>
       <View style={styles.sectionHeaderLeft}>

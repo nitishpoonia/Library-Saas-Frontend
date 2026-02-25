@@ -2,7 +2,7 @@
 
 const DEV_DEFAULT = 'http://192.168.31.156:4000';
 const PROD_DEFAULT = 'https://libaray-saas-backend.onrender.com';
-const IS_DEV = false;
+const IS_DEV = true;
 function getBaseUrl(): string {
   return IS_DEV ? DEV_DEFAULT : PROD_DEFAULT;
 }

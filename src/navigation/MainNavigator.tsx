@@ -4,10 +4,13 @@ import Dashboard from '../features/dashboard/screens/Dashbaord';
 import FinanceStack from '../features/finance/navigation/FinanceNavigator';
 import StudentStack from '../features/students/studentNavigation/StudentNavigator';
 
+import HelpfulInfoStack from '../features/helpfulInfo/helpfulInfoNavigator/helpfulInfoNavigator';
+
 export type MainStackParamList = {
   Dashboard: undefined;
   Finance: undefined;
   Student: undefined;
+  HelpfulInfo: undefined;
 };
 
 const Stack = createStackNavigator<MainStackParamList>();
@@ -23,6 +26,7 @@ const MainStack = () => {
       <Stack.Screen name="Dashboard" component={Dashboard} />
       <Stack.Screen name="Finance" component={FinanceStack} />
       <Stack.Screen name="Student" component={StudentStack} />
+      <Stack.Screen name="HelpfulInfo" component={HelpfulInfoStack} />
     </Stack.Navigator>
   );
 };

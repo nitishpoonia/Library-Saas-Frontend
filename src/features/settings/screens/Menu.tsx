@@ -20,6 +20,11 @@ const Menu = () => {
       handlePress: () => navigation.navigate('Profile'),
     },
     {
+      name: 'Library',
+      icon: 'building',
+      handlePress: () => navigation.navigate('Library'),
+    },
+    {
       name: 'Change Password',
       icon: 'key',
       handlePress: () => navigation.navigate('ChangePassword'),

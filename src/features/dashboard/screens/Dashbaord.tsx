@@ -20,6 +20,7 @@ import LoadingScreen from '../../../components/ui/LoadingScreen';
 import { useNavigation } from '@react-navigation/native';
 import FontAwesome6 from '@react-native-vector-icons/fontawesome6';
 import { useNotificationService } from '../../../services/notificationService';
+import StudentFeesCards from '../../../components/ui/StudentFeesCards';
 
 const Dashboard: React.FC = () => {
   const { data: libraryData, isLoading: isLibraryIdLoading } =
@@ -49,6 +50,9 @@ const Dashboard: React.FC = () => {
   const occupiedSeats = dashboardData?.dashboard?.seats.occupied;
   const totalSeats = dashboardData?.dashboard?.seats.total;
   const activeStudents = dashboardData?.dashboard?.students.active;
+  const overdue = dashboardData?.dashboard?.membership?.overdue;
+  const expiringSoon = dashboardData?.dashboard?.membership?.expiringSoon;
+
   const occupancyRate =
     totalSeats > 0 ? Math.round((occupiedSeats / totalSeats) * 100) : 0;
 
@@ -87,6 +91,34 @@ const Dashboard: React.FC = () => {
           </Text>
         </View>
 
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Helpfull Info</Text>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.rowCards}
+            contentContainerStyle={{ gap: 12 }}
+          >
+            <StudentFeesCards
+              variant="overdue"
+              count={overdue}
+              onPress={() =>
+                navigation.navigate('HelpfulInfo', {
+                  screen: 'Overdue',
+                })
+              }
+            />
+            <StudentFeesCards
+              variant="expiring"
+              count={expiringSoon}
+              onPress={() =>
+                navigation.navigate('HelpfulInfo', {
+                  screen: 'ExpiringSoon',
+                })
+              }
+            />
+          </ScrollView>
+        </View>
         {/* Finance Overview */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>

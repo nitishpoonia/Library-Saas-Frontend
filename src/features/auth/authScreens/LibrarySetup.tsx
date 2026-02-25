@@ -30,9 +30,9 @@ const LibrarySetup = () => {
   } = useForm({
     resolver: yupResolver(librarySetupSchema),
     defaultValues: {
-      name: 'SOme random name',
-      seats: '25',
-      address: 'asdklfj akdfja df adjkf lkjad f',
+      name: '',
+      seats: '',
+      address: '',
     },
   });
 
