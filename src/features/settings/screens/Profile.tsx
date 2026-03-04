@@ -14,7 +14,7 @@ import { useNavigation } from '@react-navigation/native';
 import { useGetUserProfile } from '../settingsQueries/settingsQueries';
 import LoadingScreen from '../../../components/ui/LoadingScreen';
 import Header from '../../../components/ui/Header';
-
+import dayjs from 'dayjs';
 const Profile = () => {
   const navigation = useNavigation();
   const {
@@ -53,7 +53,15 @@ const Profile = () => {
         {/* check if phone or email exists or not */}
         <View style={styles.item}>
           <FontAwesome6 name="envelope" iconStyle="solid" size={18} />
-          <Text style={styles.value}>{exactLevelData.email}</Text>
+          <Text style={styles.value}>
+            {exactLevelData.email ?? 'Not Provided'}
+          </Text>
+        </View>
+        <View style={styles.item}>
+          <FontAwesome6 name="phone" iconStyle="solid" size={18} />
+          <Text style={styles.value}>
+            {exactLevelData.phone ?? 'Not Provided'}
+          </Text>
         </View>
         <View style={styles.item}>
           <FontAwesome6 name="patreon" iconStyle="brand" size={18} />
@@ -64,7 +72,7 @@ const Profile = () => {
           >
             Joined Date:
           </Text>
-          <Text style={styles.value}>{exactLevelData.joined_date}</Text>
+          <Text style={styles.value}>{dayjs(exactLevelData.joined_date).format('DD MMM YYYY')}</Text>
         </View>
         <TouchableOpacity
           style={{

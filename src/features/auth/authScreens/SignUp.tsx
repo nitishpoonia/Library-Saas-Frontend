@@ -38,10 +38,10 @@ const SignUp = () => {
   } = useForm({
     resolver: yupResolver(signUpSchema),
     defaultValues: {
-      name: '',
-      identifier: '',
-      password: '',
-      agreedToTerms: false,
+      name: 'Nitish',
+      identifier: '9521337968',
+      password: '11223344',
+      agreedToTerms: true,
     },
   });
 

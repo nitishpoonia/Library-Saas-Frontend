@@ -25,7 +25,6 @@ const Library = () => {
     data: profileData,
 
     isLoading,
-    refetch,
   } = useGetUserProfile();
   const { data: libraryData, isLoading: isLibraryIdLoading } =
     useGetAllLibraries();
@@ -33,8 +32,11 @@ const Library = () => {
   console.log('profile data', profileData);
   const exactLevelData = libraryData?.libraries[0];
   const libraryId = exactLevelData?.id;
-  const { data: oneLibraryData, isRefetching } =
-    useGetLibraryDetail(libraryId);
+  const {
+    data: oneLibraryData,
+    isRefetching,
+    refetch,
+  } = useGetLibraryDetail(libraryId);
   console.log('One library data', oneLibraryData);
   const dataSentInParams = {
     name: exactLevelData.name,
