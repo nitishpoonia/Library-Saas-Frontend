@@ -138,7 +138,7 @@ const OverdueStudentListScreen = () => {
           </View>
         }
         ListHeaderComponent={
-          <Header title="Overdue Students List" navigation={navigation} />
+          <Header title="Overdue List" navigation={navigation} />
         }
       />
     </SafeAreaViewContainer>

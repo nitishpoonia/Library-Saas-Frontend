@@ -1,4 +1,8 @@
-import { useInfiniteQuery, useMutation } from '@tanstack/react-query';
+import {
+  keepPreviousData,
+  useInfiniteQuery,
+  useMutation,
+} from '@tanstack/react-query';
 import { addNewExpense, listAllExpenses } from '../services/financeService';
 type AddExpensePayload = {
   expenseData: any;
@@ -24,7 +28,8 @@ export const useListOfExpenses = (
       return lastPage.meta.hasNextPage ? lastPage.meta.page + 1 : undefined;
     },
     initialPageParam: 1,
-    staleTime: 0,
-    gcTime: 0,
+    staleTime: 30 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
+    placeholderData: keepPreviousData,
   });
 };

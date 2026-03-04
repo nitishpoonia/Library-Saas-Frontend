@@ -2,18 +2,32 @@ import { Text, TouchableOpacity, View } from 'react-native';
 import React from 'react';
 import FontAwesome6 from '@react-native-vector-icons/fontawesome6';
 import { fontFamily } from '../../constants/fonts';
-
-const Header = ({ title, navigation, disabled }: { title: string }) => {
+type HeaderProps = {
+  title: string;
+  navigation: any;
+  disabled?: boolean;
+};
+const Header = ({ title, navigation, disabled = false }: HeaderProps) => {
   return (
-    <View>
+    <View
+      style={{
+        height: 50,
+        justifyContent: 'center',
+      }}
+    >
+      {/* Back Button */}
       <TouchableOpacity
         style={{
-          gap: 10,
-          marginVertical: 10,
+          position: 'absolute',
+          zIndex: 20,
+          left: 0,
           flexDirection: 'row',
           alignItems: 'center',
+          gap: 8,
         }}
-        onPress={() => navigation.goBack()}
+        onPress={() => {
+          navigation.goBack();
+        }}
         disabled={disabled}
         activeOpacity={0.8}
       >
@@ -27,8 +41,11 @@ const Header = ({ title, navigation, disabled }: { title: string }) => {
           Back
         </Text>
       </TouchableOpacity>
+
+      {/* Centered Title */}
       <Text
         style={{
+          textAlign: 'center',
           fontFamily: fontFamily.MONTSERRAT.semiBold,
           fontSize: 18,
         }}
