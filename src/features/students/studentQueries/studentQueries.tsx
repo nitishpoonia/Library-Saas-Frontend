@@ -1,5 +1,10 @@
 import { queryClient } from '../../../../index';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import {
+  keepPreviousData,
+  useInfiniteQuery,
+  useMutation,
+  useQuery,
+} from '@tanstack/react-query';
 import {
   addStudent,
   deleteStudent,
@@ -19,10 +24,18 @@ export function useAddStudent() {
   });
 }
 
-export function useGetStudents(libraryId: number) {
-  return useQuery({
-    queryKey: ['students', libraryId],
-    queryFn: () => getStudentList(libraryId),
+export function useGetStudents(libraryId: number, search: string) {
+  return useInfiniteQuery({
+    queryKey: ['students', libraryId, search],
+    queryFn: ({ pageParam = 1 }) =>
+      getStudentList(libraryId, pageParam, search),
+    getNextPageParam: lastPage => {
+      return lastPage.meta.hasNextPage ? lastPage.meta.page + 1 : undefined;
+    },
+    initialPageParam: 1,
+    staleTime: 30 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
+    placeholderData: keepPreviousData,
     enabled: !!libraryId,
   });
 }

@@ -27,9 +27,20 @@ export async function addStudent(studentData: student) {
   }
 }
 
-export async function getStudentList(libraryId: number) {
+export async function getStudentList(
+  libraryId: number,
+  pageParam: number,
+  search: string,
+) {
   const res = await apiClientWithAuth.get(
     ENDPOINTS.STUDENT.LIST_OF_STUDENT(libraryId),
+    {
+      params: {
+        page: pageParam,
+        limit: 20,
+        search,
+      },
+    },
   );
   return res.data;
 }
