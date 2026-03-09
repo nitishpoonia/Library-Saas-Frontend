@@ -8,7 +8,7 @@ import { logout } from '../../auth/authSlice/authSlice';
 import { useDispatch } from 'react-redux';
 import ConfirmationModal from '../../../components/ui/ConfirmationModel';
 import Header from '../../../components/ui/Header';
-
+import DeviceInfo from 'react-native-device-info';
 const Menu = () => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
@@ -39,31 +39,49 @@ const Menu = () => {
   return (
     <SafeAreaViewContainer>
       <Header title="Menu" navigation={navigation} />
-      <View>
-        {MENU_ITEMS.map((item, index) => {
-          return (
-            <TouchableOpacity
-              key={index}
-              style={style.item}
-              activeOpacity={0.8}
-              onPress={item.handlePress}
-            >
-              <FontAwesome6
-                name={item.icon}
-                iconStyle="solid"
-                color="#6366F1"
-                size={25}
-              />
-              <Text
-                style={{
-                  fontFamily: fontFamily.MONTSERRAT.medium,
-                }}
+      <View
+        style={{
+          flex: 1,
+          justifyContent: 'space-between',
+        }}
+      >
+        <View>
+          {MENU_ITEMS.map((item, index) => {
+            return (
+              <TouchableOpacity
+                key={index}
+                style={style.item}
+                activeOpacity={0.8}
+                onPress={item.handlePress}
               >
-                {item.name}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
+                <FontAwesome6
+                  name={item.icon}
+                  iconStyle="solid"
+                  color="#6366F1"
+                  size={25}
+                />
+                <Text
+                  style={{
+                    fontFamily: fontFamily.MONTSERRAT.medium,
+                  }}
+                >
+                  {item.name}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+
+        <Text
+          style={{
+            textAlign: 'center',
+            color: '#6B7280',
+            marginVertical: 20,
+            fontFamily: fontFamily.MONTSERRAT.regular,
+          }}
+        >
+          Version {DeviceInfo.getVersion()}
+        </Text>
       </View>
       <ConfirmationModal
         visible={isLogingOut}
