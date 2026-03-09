@@ -38,10 +38,10 @@ const SignUp = () => {
   } = useForm({
     resolver: yupResolver(signUpSchema),
     defaultValues: {
-      name: 'Nitish',
-      identifier: '9521337968',
-      password: '11223344',
-      agreedToTerms: true,
+      name: '',
+      identifier: '',
+      password: '',
+      agreedToTerms: false,
     },
   });
 
@@ -111,6 +111,7 @@ const SignUp = () => {
                     value={value}
                     onChangeText={onChange}
                     style={CommonStyles.input}
+                    placeholderTextColor={'#000'}
                   />
                 </View>
               </View>
@@ -141,6 +142,7 @@ const SignUp = () => {
                   placeholder="Email or Phone"
                   value={value}
                   onChangeText={onChange}
+                  placeholderTextColor={'#000'}
                 />
               </View>
             )}
@@ -172,6 +174,7 @@ const SignUp = () => {
                   secureTextEntry={!isPasswordVisible}
                   value={value}
                   onChangeText={onChange}
+                  placeholderTextColor={'#000'}
                 />
 
                 <TouchableOpacity

@@ -128,6 +128,7 @@ const LibrarySetup = () => {
                       width: '100%',
                     },
                   ]}
+                  placeholderTextColor={'#000'}
                   editable={!isPending}
                 />
               </View>
@@ -157,6 +158,7 @@ const LibrarySetup = () => {
                   value={value}
                   onChangeText={onChange}
                   keyboardType="number-pad"
+                  placeholderTextColor={'#000'}
                   editable={!isPending}
                 />
               </View>
@@ -185,6 +187,7 @@ const LibrarySetup = () => {
                   style={[CommonStyles.input, styles.addressInput]}
                   placeholder="Address (e.g., 221B Baker Street, Delhi)"
                   value={value}
+                  placeholderTextColor={'#000'}
                   onChangeText={onChange}
                   multiline
                   numberOfLines={4}

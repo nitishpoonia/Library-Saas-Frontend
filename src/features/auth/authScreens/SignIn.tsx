@@ -39,8 +39,8 @@ const SignIn = () => {
   } = useForm({
     resolver: yupResolver(signInSchema),
     defaultValues: {
-      identifier: '9521337968',
-      password: '11223344',
+      identifier: '',
+      password: '',
       agreedToTerms: true,
     },
   });
@@ -109,6 +109,7 @@ const SignIn = () => {
                   <TextInput
                     placeholder="Enter your phone or email"
                     value={value}
+                    placeholderTextColor={'#000'}
                     onChangeText={onChange}
                     style={CommonStyles.input}
                     // editable={!isPending}
@@ -140,6 +141,7 @@ const SignIn = () => {
                     errors.password && CommonStyles.inputError,
                   ]}
                   placeholder="Password"
+                  placeholderTextColor={'#000'}
                   secureTextEntry={!isPasswordVisible}
                   value={value}
                   onChangeText={onChange}
