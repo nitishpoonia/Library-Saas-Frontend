@@ -1,6 +1,5 @@
 import {
   ActivityIndicator,
-  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
@@ -24,6 +23,7 @@ import { useDispatch } from 'react-redux';
 import Toast from 'react-native-toast-message';
 import { CommonStyles } from '../CommonStyles';
 import { useNavigation } from '@react-navigation/native';
+import VersionNumber from '../../../components/ui/VersionNumber';
 const SignUp = () => {
   // States
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
@@ -255,6 +255,7 @@ const SignUp = () => {
             <Text style={CommonStyles.linkText}>Login</Text>
           </TouchableOpacity>
         </View>
+        <VersionNumber />
       </KeyboardAwareScrollView>
     </SafeAreaViewContainer>
   );

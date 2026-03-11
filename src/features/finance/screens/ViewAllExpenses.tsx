@@ -28,7 +28,10 @@ type Expense = {
   amount: string | number;
   expense_date: string;
 };
-
+const PRIMARY = '#6366F1';
+const PRIMARY_LIGHT = '#818CF8';
+const PRIMARY_DARK = '#4F46E5';
+const PRIMARY_MUTED = '#EEF2FF';
 const ListAllExpenses = () => {
   const navigation = useNavigation();
   const route = useRoute();
@@ -36,11 +39,14 @@ const ListAllExpenses = () => {
 
   const [search, setSearch] = React.useState('');
   const [debouncedSearch, setDebouncedSearch] = React.useState('');
+  const [isDebouncing, setIsDebouncing] = React.useState(false);
 
   React.useEffect(() => {
+    setIsDebouncing(true);
     const handler = setTimeout(() => {
       setDebouncedSearch(search);
     }, 400);
+    setIsDebouncing(false);
 
     return () => clearTimeout(handler);
   }, [search]);
@@ -61,6 +67,7 @@ const ListAllExpenses = () => {
   const allExpenses = useMemo(() => {
     return data?.pages?.flatMap(page => page.expenses) ?? [];
   }, [data]);
+  const isSearching = isFetching && !isFetchingNextPage && !isRefetching;
 
   useFocusEffect(
     React.useCallback(() => {
@@ -157,7 +164,12 @@ const ListAllExpenses = () => {
     <SafeAreaViewContainer>
       <Header title="All Expenses" navigation={navigation} />
 
-      <View style={styles.searchContainer}>
+      <View
+        style={[
+          styles.searchContainer,
+          search.length > 0 && styles.searchContainerActive,
+        ]}
+      >
         <FontAwesome6
           name="magnifying-glass"
           iconStyle="solid"
@@ -172,7 +184,15 @@ const ListAllExpenses = () => {
           style={styles.searchInput}
         />
       </View>
-
+      {!isDebouncing && !isSearching && debouncedSearch.length > 0 && (
+        <Text style={styles.resultCount}>
+          {allExpenses.length === 0
+            ? 'No results'
+            : `${allExpenses.length} expense${
+                allExpenses.length !== 1 ? 's' : ''
+              } found`}
+        </Text>
+      )}
       <View style={styles.listContainer}>
         <FlashList
           data={allExpenses}
@@ -215,6 +235,10 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: fontFamily.MONTSERRAT.medium,
     color: '#000',
+  },
+  searchContainerActive: {
+    borderColor: PRIMARY_LIGHT,
+    backgroundColor: PRIMARY_MUTED,
   },
   centerContainer: {
     flex: 1,
@@ -270,6 +294,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 64,
     gap: 12,
+  },
+  resultCount: {
+    fontSize: 12,
+    fontFamily: fontFamily.MONTSERRAT.medium,
+    color: '#6b7280',
+    marginBottom: 10,
+    marginLeft: 4,
   },
   emptyTitle: {
     fontSize: 20,

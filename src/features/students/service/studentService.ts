@@ -24,6 +24,7 @@ export async function addStudent(studentData: student) {
     return res.data;
   } catch (error) {
     console.error('Error adding student', error?.response);
+    throw new Error(error?.response?.data?.error || 'Failed to add student');
   }
 }
 

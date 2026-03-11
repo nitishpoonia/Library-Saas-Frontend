@@ -2,7 +2,6 @@ import {
   View,
   Text,
   StyleSheet,
-  RefreshControl,
   ActivityIndicator,
   TouchableOpacity,
 } from 'react-native';
@@ -12,7 +11,7 @@ import Header from '../../../components/ui/Header';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useGetStudents } from '../studentQueries/studentQueries';
 import { fontFamily } from '../../../constants/fonts';
-import { ScrollView, TextInput } from 'react-native-gesture-handler';
+import { TextInput } from 'react-native-gesture-handler';
 import FontAwesome6 from '@react-native-vector-icons/fontawesome6';
 import { FlashList } from '@shopify/flash-list';
 
@@ -183,16 +182,13 @@ const ListOfStudents = () => {
           search.length > 0 && styles.searchContainerActive,
         ]}
       >
-        {isDebouncing || isSearching ? (
-          <ActivityIndicator size="small" color={PRIMARY} />
-        ) : (
-          <FontAwesome6
-            name="magnifying-glass"
-            iconStyle="solid"
-            size={15}
-            color={search ? PRIMARY : '#6b7280'}
-          />
-        )}
+        <FontAwesome6
+          name="magnifying-glass"
+          iconStyle="solid"
+          size={15}
+          color={search ? PRIMARY : '#6b7280'}
+        />
+
         <TextInput
           placeholder="Search by name or phone…"
           placeholderTextColor="#9ca3af"

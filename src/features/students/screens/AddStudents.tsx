@@ -29,6 +29,8 @@ import { fontFamily } from '../../../constants/fonts';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import useKeyboardVisible from '../../../components/layout/useKeyboardHook';
 import Toast from 'react-native-toast-message';
+import ReceiptModal, { ReceiptData } from '../components/ReceiptModal';
+import { getLibraryData } from '../../../utils/AsyncStorageUtil';
 
 type PaymentMethod = 'Cash' | 'Card' | 'UPI' | 'Bank Transfer';
 
@@ -50,6 +52,9 @@ const useDebounce = (value: any, delay: number) => {
 };
 
 const AddStudentScreen = () => {
+  const [receiptVisible, setReceiptVisible] = useState(false);
+  const [receiptData, setReceiptData] = useState<ReceiptData | null>(null);
+
   const tabBarHeight = useBottomTabBarHeight();
   const navigation = useNavigation();
   const route = useRoute();
@@ -70,11 +75,12 @@ const AddStudentScreen = () => {
   const [showEndTimePicker, setShowEndTimePicker] = useState(false);
   const [bookedFor, setBookedFor] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('Cash');
-  const [amount, setAmount] = useState('');
+  const [totalFee, setTotalFee] = useState('');
+  const [amountPaid, setAmountPaid] = useState('');
+
   const [showPaymentDropdown, setShowPaymentDropdown] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
 
-  // Debounced values
   const debouncedStartTime = useDebounce(startTime, 3000);
   const debouncedEndTime = useDebounce(endTime, 3000);
   const debouncedBookedFor = useDebounce(bookedFor, 3000);
@@ -124,7 +130,6 @@ const AddStudentScreen = () => {
 
   const availableSeats = availableSeatsData?.data?.availableSeats || [];
 
-  // Check if user is actively typing (debounce in progress)
   const isDebouncing =
     bookedFor !== debouncedBookedFor ||
     formatTime(startTime) !== formatTime(debouncedStartTime) ||
@@ -146,44 +151,63 @@ const AddStudentScreen = () => {
     setEndTime(new Date());
     setBookedFor('');
     setPaymentMethod('Cash');
-    setAmount('');
+    setAmountPaid('');
     setShowPaymentDropdown(false);
     setIsDirty(false);
   };
 
   const validateForm = () => {
     if (!name.trim()) {
-      Alert.alert('Validation Error', 'Please enter student name');
+      Toast.show({
+        type: 'error',
+        text1: 'Please enter student name',
+      });
       return false;
     }
+
     if (phone.length !== 10) {
-      Alert.alert(
-        'Validation Error',
-        'Please enter a valid 10-digit phone number',
-      );
+      Toast.show({
+        type: 'error',
+        text1: 'Please enter a valid 10-digit phone number',
+      });
       return false;
     }
+
     if (!selectedSeatId) {
-      Alert.alert('Validation Error', 'Please select a seat');
+      Toast.show({
+        type: 'error',
+        text1: 'Please select a seat',
+      });
       return false;
     }
+
     if (!bookedFor || parseInt(bookedFor) <= 0) {
-      Alert.alert('Validation Error', 'Please enter valid number of days');
+      Toast.show({
+        type: 'error',
+        text1: 'Please enter valid number of days',
+      });
       return false;
     }
-    if (!amount || parseFloat(amount) <= 0) {
-      Alert.alert('Validation Error', 'Please enter valid amount');
+
+    if (!amountPaid || parseFloat(amountPaid) <= 0) {
+      Toast.show({
+        type: 'error',
+        text1: 'Please enter valid amount',
+      });
       return false;
     }
+
     return true;
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!validateForm()) return;
 
     const selectedSeat = availableSeats.find(
       (seat: any) => seat.id === selectedSeatId,
     );
+    const libraryData = await getLibraryData();
+    console.log('LIbrary Data', libraryData);
 
     const studentData = {
       name,
@@ -192,13 +216,14 @@ const AddStudentScreen = () => {
       timing: getTimingString(),
       booked_for: parseInt(bookedFor),
       payment_method: paymentMethod,
-      amount,
+      amount_paid: amountPaid,
+      total_fee: totalFee,
       library_id: Number(libraryId),
     };
 
     console.log('Student Data:', studentData);
     addStudent(studentData, {
-      onSuccess: () => {
+      onSuccess: data => {
         Toast.show({
           type: 'success',
           text1: 'Student added successfully',
@@ -206,16 +231,38 @@ const AddStudentScreen = () => {
         queryClient.invalidateQueries({
           queryKey: ['dashboardOverview'],
         });
-        resetForm();
-        navigation.goBack();
+        console.log('success data', data);
+        const { receipt, student } = data; // adjust based on your axios response shape
+        setReceiptData({
+          receipt_number: receipt.receipt_number,
+          student_name: receipt.student_name,
+          student_phone: student.phone,
+          seat_number: receipt.seat_number,
+          timing: receipt.timing,
+          membership_start: receipt.membership_start,
+          membership_end: receipt.membership_end,
+          total_fee: receipt.total_fee,
+          amount_paid: receipt.amount_paid,
+          pending_amount: receipt.pending_amount,
+          payment_mode: receipt.payment_mode,
+          payment_date: receipt.payment_date,
+          library_name: libraryData?.name,
+          library_address: libraryData?.address,
+        });
+        setReceiptVisible(true);
       },
       onError: (error: any) => {
         console.error('Error adding student:', error.message);
-        Alert.alert('Error', error.message, [
-          {
-            text: 'OK',
-          },
-        ]);
+        // Alert.alert('Error', error.message, [
+        //   {
+        //     text: 'OK',
+        //   },
+        // ]);
+        Toast.show({
+          type: 'error',
+          text1: 'Cannot add student',
+          text2: error.message,
+        });
       },
     });
   };
@@ -443,6 +490,7 @@ const AddStudentScreen = () => {
               availableSeats.length > 0 && (
                 <ScrollView
                   horizontal
+                  keyboardShouldPersistTaps="handled"
                   showsHorizontalScrollIndicator={false}
                   style={styles.seatsScrollView}
                   contentContainerStyle={styles.seatsContainer}
@@ -515,21 +563,37 @@ const AddStudentScreen = () => {
               </View>
             )}
           </View>
-
-          {/* Amount */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Amount *</Text>
+            <Text style={styles.label}>Total Fees *</Text>
             <View style={styles.amountContainer}>
               <Text style={styles.currencySymbol}>₹</Text>
               <TextInput
                 style={styles.amountInput}
-                value={amount}
+                value={totalFee}
                 onChangeText={v => {
-                  setAmount(v);
+                  setTotalFee(v);
                   setIsDirty(true);
                 }}
                 keyboardType="decimal-pad"
-                placeholder="Enter amount"
+                placeholder="Enter total fees"
+                placeholderTextColor="#999"
+              />
+            </View>
+          </View>
+          {/* amountPaid */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Amount Paid *</Text>
+            <View style={styles.amountContainer}>
+              <Text style={styles.currencySymbol}>₹</Text>
+              <TextInput
+                style={styles.amountInput}
+                value={amountPaid}
+                onChangeText={v => {
+                  setAmountPaid(v);
+                  setIsDirty(true);
+                }}
+                keyboardType="decimal-pad"
+                placeholder="Enter amount paid"
                 placeholderTextColor="#999"
               />
             </View>
@@ -561,6 +625,17 @@ const AddStudentScreen = () => {
 
         {/* <View style={{ height: 100 }} /> */}
       </KeyboardAwareScrollView>
+      {receiptData && (
+        <ReceiptModal
+          visible={receiptVisible}
+          onClose={() => {
+            setReceiptVisible(false);
+            resetForm();
+            navigation.goBack();
+          }}
+          data={receiptData}
+        />
+      )}
     </SafeAreaViewContainer>
   );
 };

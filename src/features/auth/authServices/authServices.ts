@@ -18,6 +18,10 @@ export const login = async (payload: any): Promise<LoginResponse> => {
     return response.data;
   } catch (error: any) {
     console.error('Error while logging in the user', error?.response?.data);
+     console.error('Full error:', error?.code);
+     console.error('Message:', error?.message);
+     console.error('Response:', error?.response);
+     console.error('Request:', error?.request?._url);
     throw new Error(error?.response?.data?.error);
   }
 };

@@ -23,6 +23,7 @@ import {
   setSignInLoading,
 } from '../authSlice/authSlice';
 import Toast from 'react-native-toast-message';
+import VersionNumber from '../../../components/ui/VersionNumber';
 
 const SignIn = () => {
   // States
@@ -39,8 +40,8 @@ const SignIn = () => {
   } = useForm({
     resolver: yupResolver(signInSchema),
     defaultValues: {
-      identifier: '',
-      password: '',
+      identifier: '9521337968',
+      password: '12345678',
       agreedToTerms: true,
     },
   });
@@ -225,6 +226,7 @@ const SignIn = () => {
             <Text style={CommonStyles.linkText}>Create Account</Text>
           </TouchableOpacity>
         </View>
+        <VersionNumber />
       </KeyboardAwareScrollView>
     </SafeAreaViewContainer>
   );

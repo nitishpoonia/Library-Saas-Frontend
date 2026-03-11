@@ -36,8 +36,6 @@ apiClientWithAuth.interceptors.request.use(
 
 apiClientWithoutAuth.interceptors.request.use(
   config => {
-    const fullUrl = `${config.baseURL}${config.url}`;
-    console.log('API Without Auth →', config.method?.toUpperCase(), fullUrl);
     return config;
   },
   error => {

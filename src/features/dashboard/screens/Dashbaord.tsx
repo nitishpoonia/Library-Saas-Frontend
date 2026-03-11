@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   View,
   Text,
@@ -21,11 +21,19 @@ import { useNavigation } from '@react-navigation/native';
 import FontAwesome6 from '@react-native-vector-icons/fontawesome6';
 import { useNotificationService } from '../../../services/notificationService';
 import StudentFeesCards from '../../../components/ui/StudentFeesCards';
+import { saveLibraryData } from '../../../utils/AsyncStorageUtil';
 
 const Dashboard: React.FC = () => {
   const { data: libraryData, isLoading: isLibraryIdLoading } =
     useGetAllLibraries();
   const libraryId = libraryData?.libraries[0]?.id;
+
+  useEffect(() => {
+    if (libraryData?.libraries[0]) {
+      saveLibraryData(libraryData?.libraries[0]);
+    }
+  }, []);
+
   const {
     data: dashboardData,
     isLoading,
@@ -55,7 +63,6 @@ const Dashboard: React.FC = () => {
 
   const occupancyRate =
     totalSeats > 0 ? Math.round((occupiedSeats / totalSeats) * 100) : 0;
-
   if (isLoading || isLibraryIdLoading) {
     return (
       <SafeAreaViewContainer>
