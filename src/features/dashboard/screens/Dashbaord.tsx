@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -22,8 +22,11 @@ import FontAwesome6 from '@react-native-vector-icons/fontawesome6';
 import { useNotificationService } from '../../../services/notificationService';
 import StudentFeesCards from '../../../components/ui/StudentFeesCards';
 import { saveLibraryData } from '../../../utils/AsyncStorageUtil';
+import SubscriptionModal from '../../../components/ui/SubscriptionModal';
 
 const Dashboard: React.FC = () => {
+  const [subscriptionModalVisible, setSubscriptionModalVisible] =
+    useState(false);
   const { data: libraryData, isLoading: isLibraryIdLoading } =
     useGetAllLibraries();
   const libraryId = libraryData?.libraries[0]?.id;
@@ -32,7 +35,7 @@ const Dashboard: React.FC = () => {
     if (libraryData?.libraries[0]) {
       saveLibraryData(libraryData?.libraries[0]);
     }
-  }, []);
+  }, [libraryData]);
 
   const {
     data: dashboardData,
@@ -132,14 +135,18 @@ const Dashboard: React.FC = () => {
             <Text style={styles.sectionTitle}>Finance Overview</Text>
             <TouchableOpacity
               style={styles.addButton}
-              onPress={() =>
+              onPress={() => {
+                if (daysLeftInSubscription <= 0) {
+                  setSubscriptionModalVisible(true);
+                  return;
+                }
                 navigation.navigate('Finance', {
                   screen: 'AddExpense',
                   params: {
                     libraryId: libraryId,
                   },
-                })
-              }
+                });
+              }}
             >
               <Text style={styles.addButtonText}>+ Add Expense</Text>
             </TouchableOpacity>
@@ -197,14 +204,18 @@ const Dashboard: React.FC = () => {
             <Text style={styles.sectionTitle}>Students</Text>
             <TouchableOpacity
               style={styles.primaryButton}
-              onPress={() =>
+              onPress={() => {
+                if (daysLeftInSubscription <= 0) {
+                  setSubscriptionModalVisible(true);
+                  return;
+                }
                 navigation.navigate('Student', {
                   screen: 'AddStudent',
                   params: {
                     libraryId: libraryId,
                   },
-                })
-              }
+                });
+              }}
             >
               <Text style={styles.primaryButtonText}>+ Add Student</Text>
             </TouchableOpacity>
@@ -267,6 +278,11 @@ const Dashboard: React.FC = () => {
           </View>
         </View>
       </ScrollView>
+
+      <SubscriptionModal
+        visible={subscriptionModalVisible}
+        onClose={() => setSubscriptionModalVisible(false)}
+      />
     </SafeAreaViewContainer>
   );
 };

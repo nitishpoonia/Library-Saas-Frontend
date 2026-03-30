@@ -8,8 +8,11 @@ import {
 import {
   addStudent,
   deleteStudent,
+  getStudentDetail,
   getStudentList,
   getAvailableSeats,
+  updateStudent,
+  renewMembership,
 } from '../service/studentService';
 
 export function useAddStudent() {
@@ -68,3 +71,51 @@ export const useGetAvailableSeats = ({
     enabled: isEnabled,
   });
 };
+
+export function useGetStudentDetail(libraryId: number, studentId: number) {
+  return useQuery({
+    queryKey: ['studentDetail', libraryId, studentId],
+    queryFn: () => getStudentDetail(libraryId, studentId),
+    enabled: !!libraryId && !!studentId,
+  });
+}
+
+export function useUpdateStudent() {
+  return useMutation({
+    mutationFn: ({ libraryId, studentId, studentData }: any) =>
+      updateStudent(libraryId, studentId, studentData),
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ['students', variables.libraryId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['studentDetail', variables.libraryId, variables.studentId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['dashboardOverview', variables.libraryId],
+      });
+    },
+  });
+}
+
+export function useRenewMembership() {
+  return useMutation({
+    mutationFn: ({ libraryId, payload }: any) =>
+      renewMembership(libraryId, payload),
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ['students', variables.libraryId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: [
+          'studentDetail',
+          variables.libraryId,
+          variables.payload?.student_id,
+        ],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['dashboardOverview', variables.libraryId],
+      });
+    },
+  });
+}

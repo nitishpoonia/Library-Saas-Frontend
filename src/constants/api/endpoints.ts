@@ -17,7 +17,13 @@ export const ENDPOINTS = {
     ADD: '/libraries/student/add-student',
     LIST_OF_STUDENT: (libraryId: number) =>
       `/libraries/student/${libraryId}/all-students`,
+    DETAIL: (libraryId: number, studentId: number) =>
+      `/libraries/student/${libraryId}/${studentId}`,
+    UPDATE: (libraryId: number, studentId: number) =>
+      `/libraries/student/${libraryId}/${studentId}`,
     DELETE: '/libraries/student/delete-student',
+    RENEW_MEMBERSHIP: (libraryId: number) =>
+      `/libraries/student/${libraryId}/renew-membership`,
   },
   EXPENSE: {
     ADD: (libraryId: number) => `/libraries/${libraryId}/add-expense`,
@@ -36,7 +42,7 @@ export const ENDPOINTS = {
   },
   HELPFULINFO: {
     OVERDUE_STUDENT_LIST: '/libraries/student/overdue',
-    EXPIRING_SOON: 'libraries/student/expiringSoon'
+    EXPIRING_SOON: 'libraries/student/expiringSoon',
   },
 } as const;
 

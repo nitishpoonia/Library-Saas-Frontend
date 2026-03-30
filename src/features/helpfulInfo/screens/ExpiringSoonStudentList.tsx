@@ -12,8 +12,7 @@ import { useNavigation } from '@react-navigation/native';
 import { useFetchListOfExpiringSoon } from '../helpfulInfoQueries/helpfulInfoQueries';
 import { fontFamily } from '../../../constants/fonts';
 
-// Color constants
-const PRIMARY = '#D97706'; // amber instead of indigo — "expiring soon" warning tone
+const PRIMARY = '#D97706';
 const PRIMARY_LIGHT = '#FDE68A';
 const PRIMARY_MUTED = '#FFFBEB';
 
@@ -123,7 +122,6 @@ const ExpiringSoonStudentListScreen = () => {
 
         {/* Footer Row */}
         <View style={styles.footer}>
-         
           <View style={styles.footerItem}>
             <Text style={styles.footerLabel}>Student ID</Text>
             <Text style={styles.footerValue}>#{student.id}</Text>

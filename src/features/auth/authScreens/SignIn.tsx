@@ -40,9 +40,9 @@ const SignIn = () => {
   } = useForm({
     resolver: yupResolver(signInSchema),
     defaultValues: {
-      identifier: '9521337968',
-      password: '12345678',
-      agreedToTerms: true,
+      identifier: '',
+      password: '',
+      agreedToTerms: false,
     },
   });
 

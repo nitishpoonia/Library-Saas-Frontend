@@ -14,19 +14,30 @@ import { fontFamily } from '../../../constants/fonts';
 import { TextInput } from 'react-native-gesture-handler';
 import FontAwesome6 from '@react-native-vector-icons/fontawesome6';
 import { FlashList } from '@shopify/flash-list';
+import RenewMembershipModal from '../components/RenewMembershipModal';
+import ReceiptModal from '../components/ReceiptModal';
 
 const PRIMARY = '#6366F1';
 const PRIMARY_LIGHT = '#818CF8';
 const PRIMARY_DARK = '#4F46E5';
 const PRIMARY_MUTED = '#EEF2FF';
 
+const ItemSeparator = () => <View style={styles.itemSeparator} />;
+
 const ListOfStudents = () => {
-  const route = useRoute();
+  const route = useRoute<any>();
   const { libraryId } = route?.params;
   const [search, setSearch] = React.useState('');
   const [debouncedSearch, setDebouncedSearch] = React.useState('');
   const [isDebouncing, setIsDebouncing] = React.useState(false);
-  const navigation = useNavigation();
+  const navigation = useNavigation<any>();
+
+  // Modal states for renewal and receipt
+  const [renewalModalVisible, setRenewalModalVisible] = React.useState(false);
+  const [selectedRenewalData, setSelectedRenewalData] =
+    React.useState<any>(null);
+  const [receiptVisible, setReceiptVisible] = React.useState(false);
+  const [receiptData, setReceiptData] = React.useState<any>(null);
 
   const {
     data,
@@ -38,6 +49,36 @@ const ListOfStudents = () => {
     isRefetching,
     isFetching,
   } = useGetStudents(Number(libraryId), debouncedSearch);
+
+  const handleRenewMemebership = (
+    studentId: number,
+    membershipId: number,
+    studentData: any,
+  ) => {
+    setSelectedRenewalData({
+      studentId,
+      membershipId,
+      studentData,
+    });
+    setRenewalModalVisible(true);
+  };
+
+  const handleRenewalSuccess = (receipt: any) => {
+    setReceiptData(receipt);
+    setReceiptVisible(true);
+    setRenewalModalVisible(false);
+    refetch(); // Refresh the student list
+  };
+
+  const handleCloseRenewalModal = () => {
+    setRenewalModalVisible(false);
+    setSelectedRenewalData(null);
+  };
+
+  const handleCloseReceiptModal = () => {
+    setReceiptVisible(false);
+    setReceiptData(null);
+  };
 
   React.useEffect(() => {
     setIsDebouncing(true);
@@ -61,72 +102,120 @@ const ListOfStudents = () => {
     return str.charAt(0).toUpperCase() + str.slice(1);
   };
 
-  const ItemSeparator = () => <View style={{ height: 12 }} />;
-
   const renderStudentCard = ({ item }: { item: any }) => {
     const isActive = item?.membershipStatus === 'active';
+
     return (
-      <View style={styles.card}>
-        <View style={styles.cardHeader}>
-          <View style={styles.avatarCircle}>
-            <Text style={styles.avatarText}>
-              {item?.name?.charAt(0)?.toUpperCase() ?? '?'}
-            </Text>
-          </View>
-          <View style={styles.headerInfo}>
-            <Text style={styles.name}>{item?.name}</Text>
-            <Text style={styles.phone}>{item?.phone}</Text>
-          </View>
-          <View
-            style={[
-              styles.badge,
-              isActive ? styles.badgeActive : styles.badgeInactive,
-            ]}
-          >
+      <TouchableOpacity
+        activeOpacity={0.85}
+        onPress={() =>
+          navigation.navigate('StudentDetail', {
+            libraryId: Number(libraryId),
+            studentId: Number(item?.studentId),
+          })
+        }
+      >
+        <View style={styles.card}>
+          <View style={styles.cardHeader}>
+            <View style={styles.avatarCircle}>
+              <Text style={styles.avatarText}>
+                {item?.name?.charAt(0)?.toUpperCase() ?? '?'}
+              </Text>
+            </View>
+            <View style={styles.headerInfo}>
+              <Text style={styles.name}>{item?.name}</Text>
+              <Text style={styles.phone}>{item?.phone}</Text>
+            </View>
             <View
               style={[
-                styles.badgeDot,
-                isActive ? styles.badgeDotActive : styles.badgeDotInactive,
-              ]}
-            />
-            <Text
-              style={[
-                styles.badgeText,
-                isActive ? styles.badgeTextActive : styles.badgeTextInactive,
+                styles.badge,
+                isActive ? styles.badgeActive : styles.badgeInactive,
               ]}
             >
-              {capitalize(item?.membershipStatus)}
-            </Text>
+              <View
+                style={[
+                  styles.badgeDot,
+                  isActive ? styles.badgeDotActive : styles.badgeDotInactive,
+                ]}
+              />
+              <Text
+                style={[
+                  styles.badgeText,
+                  isActive ? styles.badgeTextActive : styles.badgeTextInactive,
+                ]}
+              >
+                {capitalize(item?.membershipStatus)}
+              </Text>
+            </View>
+          </View>
+
+          <View style={styles.divider} />
+
+          <View style={styles.expiryRow}>
+            <View style={styles.expiryIconBox}>
+              <Text style={styles.expiryIcon}>⏱</Text>
+            </View>
+            <Text style={styles.expiryLabel}>Expires in</Text>
+            <Text style={styles.expiryDays}>{item?.daysRemaining} days</Text>
+          </View>
+
+          <View style={styles.pillsRow}>
+            <View style={styles.pill}>
+              <Text style={styles.pillLabel}>ID</Text>
+              <Text style={styles.pillValue}>{item?.studentId}</Text>
+            </View>
+            <View style={styles.pillDivider} />
+            <View style={styles.pill}>
+              <Text style={styles.pillLabel}>Seat</Text>
+              <Text style={styles.pillValue}>{item?.seatNumber}</Text>
+            </View>
+            <View style={styles.pillDivider} />
+            <View style={styles.pill}>
+              <Text style={styles.pillLabel}>Timing</Text>
+              <Text style={styles.pillValue}>{item?.timing}</Text>
+            </View>
+          </View>
+          <View style={styles.actionRow}>
+            <TouchableOpacity
+              style={styles.editButton}
+              onPress={event => {
+                event.stopPropagation();
+                navigation.navigate('EditStudent', {
+                  libraryId: Number(libraryId),
+                  studentId: Number(item?.studentId),
+                  name: item?.name,
+                  phone: item?.phone,
+                });
+              }}
+            >
+              <Text style={styles.editButtonText}>Edit</Text>
+            </TouchableOpacity>
+          </View>
+          <View>
+            {item?.daysRemaining < 3 && (
+              <View style={styles.renewSection}>
+                <Text style={styles.renewWarningText}>
+                  This student's membership is expiring soon. Consider reaching
+                  out to them to renew.
+                </Text>
+                <TouchableOpacity
+                  style={styles.renewButton}
+                  onPress={event => {
+                    event.stopPropagation();
+                    handleRenewMemebership(
+                      item?.studentId,
+                      item?.membershipId,
+                      item,
+                    );
+                  }}
+                >
+                  <Text style={styles.renewButtonText}>Renew Membership</Text>
+                </TouchableOpacity>
+              </View>
+            )}
           </View>
         </View>
-
-        <View style={styles.divider} />
-
-        <View style={styles.expiryRow}>
-          <View style={styles.expiryIconBox}>
-            <Text style={styles.expiryIcon}>⏱</Text>
-          </View>
-          <Text style={styles.expiryLabel}>Expires in</Text>
-          <Text style={styles.expiryDays}>{item?.daysRemaining} days</Text>
-        </View>
-
-        <View style={styles.pillsRow}>
-          <View style={styles.pill}>
-            <Text style={styles.pillLabel}>ID</Text>
-            <Text style={styles.pillValue}>{item?.studentId}</Text>
-          </View>
-          <View style={styles.pillDivider} />
-          <View style={styles.pill}>
-            <Text style={styles.pillLabel}>Seat</Text>
-            <Text style={styles.pillValue}>{item?.seatNumber}</Text>
-          </View>
-          <View style={styles.pillDivider} />
-          <View style={styles.pill}>
-            <Text style={styles.pillLabel}>Timing</Text>
-            <Text style={styles.pillValue}>{item?.timing}</Text>
-          </View>
-        </View>
-      </View>
+      </TouchableOpacity>
     );
   };
 
@@ -228,7 +317,6 @@ const ListOfStudents = () => {
         data={allStudents}
         renderItem={renderStudentCard}
         keyExtractor={item => item.studentId.toString()}
-        estimatedItemSize={180}
         ItemSeparatorComponent={ItemSeparator}
         onRefresh={refetch}
         refreshing={isRefetching}
@@ -237,14 +325,32 @@ const ListOfStudents = () => {
         }}
         onEndReachedThreshold={0.5}
         ListEmptyComponent={renderEmptyList}
-        ListFooterComponent={() =>
+        ListFooterComponent={
           isFetchingNextPage ? (
-            <ActivityIndicator style={{ marginVertical: 20 }} color={PRIMARY} />
+            <ActivityIndicator style={styles.footerLoader} color={PRIMARY} />
           ) : null
         }
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 24 }}
+        contentContainerStyle={styles.listContent}
         extraData={debouncedSearch}
+      />
+
+      {/* Renewal Modal */}
+      <RenewMembershipModal
+        visible={renewalModalVisible}
+        onClose={handleCloseRenewalModal}
+        libraryId={Number(libraryId)}
+        studentId={selectedRenewalData?.studentId}
+        membershipId={selectedRenewalData?.membershipId}
+        currentMembership={selectedRenewalData?.studentData?.membership}
+        onSuccess={handleRenewalSuccess}
+      />
+
+      {/* Receipt Modal */}
+      <ReceiptModal
+        visible={receiptVisible}
+        onClose={handleCloseReceiptModal}
+        data={receiptData}
       />
     </SafeAreaViewContainer>
   );
@@ -294,6 +400,12 @@ const styles = StyleSheet.create({
     color: '#6b7280',
     marginBottom: 10,
     marginLeft: 4,
+  },
+  listContent: {
+    paddingBottom: 24,
+  },
+  itemSeparator: {
+    height: 12,
   },
   card: {
     backgroundColor: '#FFFFFF',
@@ -399,10 +511,28 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     backgroundColor: PRIMARY_MUTED,
     marginHorizontal: 18,
-    marginBottom: 18,
     borderRadius: 14,
     padding: 12,
     alignItems: 'center',
+  },
+  actionRow: {
+    paddingHorizontal: 18,
+    paddingTop: 12,
+    paddingBottom: 18,
+    alignItems: 'flex-end',
+  },
+  editButton: {
+    backgroundColor: PRIMARY_MUTED,
+    borderWidth: 1,
+    borderColor: PRIMARY_LIGHT,
+    borderRadius: 999,
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+  },
+  editButtonText: {
+    color: PRIMARY,
+    fontSize: 12,
+    fontFamily: fontFamily.MONTSERRAT.semiBold,
   },
   pill: { flex: 1, alignItems: 'center', gap: 3 },
   pillDivider: { width: 1, height: 32, backgroundColor: '#C7D2FE' },
@@ -418,6 +548,26 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: PRIMARY_DARK,
     letterSpacing: 0.2,
+  },
+  renewSection: {
+    paddingHorizontal: 18,
+    marginBottom: 12,
+  },
+  renewWarningText: {
+    color: '#DC2626',
+    fontFamily: fontFamily.MONTSERRAT.medium,
+  },
+  renewButton: {
+    alignSelf: 'flex-end',
+    backgroundColor: PRIMARY,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 4,
+    marginTop: 8,
+  },
+  renewButtonText: {
+    color: '#fff',
+    fontFamily: fontFamily.MONTSERRAT.semiBold,
   },
   emptyContainer: {
     alignItems: 'center',
@@ -451,5 +601,8 @@ const styles = StyleSheet.create({
     fontFamily: fontFamily.MONTSERRAT.semiBold,
     fontSize: 13,
     color: PRIMARY,
+  },
+  footerLoader: {
+    marginVertical: 20,
   },
 });

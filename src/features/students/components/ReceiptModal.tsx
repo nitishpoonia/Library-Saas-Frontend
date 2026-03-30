@@ -24,15 +24,22 @@ export interface ReceiptData {
   student_phone: string;
   seat_number: string | number;
   timing: string;
-  membership_start: string | Date;
-  membership_end: string | Date;
+  membership_start?: string | Date;
+  membership_end?: string | Date;
   library_name: string;
   library_address: string;
-  total_fee: number;
-  amount_paid: number;
+  total_fee?: number;
+  amount_paid?: number;
   pending_amount: number;
   payment_mode: string;
   payment_date: string | Date;
+  // Renewal-specific fields
+  amount_paid_now?: number;
+  old_end_date?: string | Date;
+  new_end_date?: string | Date;
+  renewal_days?: number;
+  total_paid_so_far?: number;
+  membership_status?: string;
 }
 
 interface ReceiptModalProps {
@@ -88,6 +95,15 @@ const ReceiptModal: React.FC<ReceiptModalProps> = ({
   const isPending = data.pending_amount > 0;
   const pendingColor = isPending ? '#EF4444' : '#10B981';
 
+  // Determine if this is a renewal receipt or creation receipt
+  const isRenewal = !!data.old_end_date && !!data.new_end_date;
+  const displayMembershipStart = isRenewal
+    ? data.old_end_date
+    : data.membership_start;
+  const displayMembershipEnd = isRenewal
+    ? data.new_end_date
+    : data.membership_end;
+
   // ── WhatsApp ───────────────────────────────────────────────────────────────
   const handleWhatsApp = async () => {
     try {
@@ -95,7 +111,7 @@ const ReceiptModal: React.FC<ReceiptModalProps> = ({
 
       const uri: string = await captureRef.current.capture();
 
-      const message = [
+      const baseMessage = [
         `*Payment Receipt*`,
         `Receipt No: ${data.receipt_number}`,
         ``,
@@ -103,22 +119,45 @@ const ReceiptModal: React.FC<ReceiptModalProps> = ({
         `*Phone:* ${data.student_phone}`,
         ``,
         `*Seat:* ${data.seat_number}  🕐 *Timing:* ${data.timing}`,
-        `*From:* ${fmt.date(data.membership_start)}  ➜  ${fmt.date(
-          data.membership_end,
-        )}`,
+      ];
+
+      const membershipMessage = isRenewal
+        ? [
+            `*Membership Renewal*`,
+            `Previous End: ${fmt.date(data.old_end_date)}`,
+            `New End: ${fmt.date(data.new_end_date)}`,
+            `Renewal Days: ${data.renewal_days}`,
+          ]
+        : [
+            `*Membership Period*`,
+            `From: ${fmt.date(displayMembershipStart)}  ➜  ${fmt.date(
+              displayMembershipEnd,
+            )}`,
+          ];
+
+      const paymentMessage = [
         ``,
-        `*Total Fee:* ${fmt.currency(data.total_fee)}`,
-        `*Amount Paid:* ${fmt.currency(data.amount_paid)}`,
+        `*Payment Details*`,
+        isRenewal
+          ? `*Amount Paid This Time:* ${fmt.currency(
+              data.amount_paid_now || 0,
+            )}`
+          : `*Total Fee:* ${fmt.currency(data.total_fee || 0)}`,
+        isRenewal
+          ? `*Total Paid So Far:* ${fmt.currency(data.total_paid_so_far || 0)}`
+          : `*Amount Paid:* ${fmt.currency(data.amount_paid || 0)}`,
         isPending
           ? `*Pending:* ${fmt.currency(data.pending_amount)}`
           : `*Fully Paid*`,
         ``,
-        `*Mode:* ${data.payment_mode}`,
+        `*Payment Mode:* ${data.payment_mode}`,
         `*Date:* ${fmt.date(data.payment_date)}`,
         ``,
         `${data.library_name}`,
         `${data.library_address}`,
-      ]
+      ];
+
+      const message = [...baseMessage, ...membershipMessage, ...paymentMessage]
         .filter(Boolean)
         .join('\n');
 
@@ -201,7 +240,9 @@ const ReceiptModal: React.FC<ReceiptModalProps> = ({
 
               <div class="divider"></div>
 
-              <div class="section-title">Seat & Membership</div>
+              <div class="section-title">${
+                isRenewal ? 'Membership Renewal' : 'Seat & Membership'
+              }</div>
               <div class="info-grid">
                 <div><div class="info-label">Seat Number</div><div class="info-value">#${
                   data.seat_number
@@ -209,34 +250,48 @@ const ReceiptModal: React.FC<ReceiptModalProps> = ({
                 <div><div class="info-label">Timing</div><div class="info-value">${
                   data.timing
                 }</div></div>
+                ${
+                  isRenewal
+                    ? `
+                <div><div class="info-label">Previous End</div><div class="info-value">${fmt.date(
+                  data.old_end_date,
+                )}</div></div>
+                <div><div class="info-label">New End</div><div class="info-value">${fmt.date(
+                  data.new_end_date,
+                )}</div></div>`
+                    : `
                 <div><div class="info-label">Start Date</div><div class="info-value">${fmt.date(
-                  data.membership_start,
+                  displayMembershipStart,
                 )}</div></div>
                 <div><div class="info-label">End Date</div><div class="info-value">${fmt.date(
-                  data.membership_end,
-                )}</div></div>
+                  displayMembershipEnd,
+                )}</div></div>`
+                }
               </div>
 
               <div class="divider"></div>
 
               <div class="section-title">Payment Summary</div>
+              ${
+                isRenewal
+                  ? `
+              <div class="fee-row"><span class="fee-label">Amount Paid This Time</span><span class="fee-value">${fmt.currency(
+                data.amount_paid_now || 0,
+              )}</span></div>
+              <div class="fee-row"><span class="fee-label">Total Paid So Far</span><span class="fee-value">${fmt.currency(
+                data.total_paid_so_far || 0,
+              )}</span></div>`
+                  : `
               <div class="fee-row"><span class="fee-label">Total Fee</span><span class="fee-value">${fmt.currency(
-                data.total_fee,
+                data.total_fee || 0,
               )}</span></div>
               <div class="fee-row"><span class="fee-label">Amount Paid</span><span class="fee-value green">${fmt.currency(
-                data.amount_paid,
-              )}</span></div>
-              ${
-                isPending
-                  ? `
-              <div class="fee-row pending-row">
-                <span class="fee-label red">Pending Amount</span>
-                <span class="fee-value red">${fmt.currency(
-                  data.pending_amount,
-                )}</span>
-              </div>`
-                  : ''
+                data.amount_paid || 0,
+              )}</span></div>`
               }
+              <div class="fee-row"><span class="fee-label">Pending Amount</span><span class="fee-value ${
+                isPending ? 'red' : 'green'
+              }">${fmt.currency(data.pending_amount)}</span></div>
 
               <div class="divider"></div>
 
@@ -340,23 +395,66 @@ const ReceiptModal: React.FC<ReceiptModalProps> = ({
 
               <Divider />
 
-              {/* Membership */}
-              <Text style={styles.sectionTitle}>MEMBERSHIP</Text>
+              {/* Membership - show different info for renewal vs creation */}
+              <Text style={styles.sectionTitle}>
+                {isRenewal ? 'MEMBERSHIP RENEWAL' : 'MEMBERSHIP'}
+              </Text>
               <InfoRow label="Seat" value={`#${data.seat_number}`} />
               <InfoRow label="Timing" value={data.timing} />
-              <InfoRow label="From" value={fmt.date(data.membership_start)} />
-              <InfoRow label="To" value={fmt.date(data.membership_end)} />
+              {isRenewal ? (
+                <>
+                  <InfoRow
+                    label="Previous End"
+                    value={fmt.date(data.old_end_date)}
+                  />
+                  <InfoRow
+                    label="New End"
+                    value={fmt.date(data.new_end_date)}
+                  />
+                  <InfoRow
+                    label="Renewal Days"
+                    value={`${data.renewal_days || 0} days`}
+                  />
+                </>
+              ) : (
+                <>
+                  <InfoRow
+                    label="From"
+                    value={fmt.date(displayMembershipStart)}
+                  />
+                  <InfoRow label="To" value={fmt.date(displayMembershipEnd)} />
+                </>
+              )}
 
               <Divider />
 
               {/* Payment */}
               <Text style={styles.sectionTitle}>PAYMENT</Text>
-              <InfoRow label="Total Fee" value={fmt.currency(data.total_fee)} />
-              <InfoRow
-                label="Amount Paid"
-                value={fmt.currency(data.amount_paid)}
-                valueColor="#10B981"
-              />
+              {isRenewal ? (
+                <>
+                  <InfoRow
+                    label="Amount Paid Now"
+                    value={fmt.currency(data.amount_paid_now || 0)}
+                    valueColor="#10B981"
+                  />
+                  <InfoRow
+                    label="Total Paid So Far"
+                    value={fmt.currency(data.total_paid_so_far || 0)}
+                  />
+                </>
+              ) : (
+                <>
+                  <InfoRow
+                    label="Total Fee"
+                    value={fmt.currency(data.total_fee || 0)}
+                  />
+                  <InfoRow
+                    label="Amount Paid"
+                    value={fmt.currency(data.amount_paid || 0)}
+                    valueColor="#10B981"
+                  />
+                </>
+              )}
               <InfoRow
                 label="Pending"
                 value={fmt.currency(data.pending_amount)}

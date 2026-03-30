@@ -63,7 +63,6 @@ const AddExpense = () => {
     handleSubmit,
     formState: { errors, isDirty },
     reset,
-    watch,
   } = useForm<ExpenseFormData>({
     resolver: yupResolver(expenseSchema),
     defaultValues: {
@@ -73,8 +72,6 @@ const AddExpense = () => {
       expenseDate: new Date(),
     },
   });
-
-  const expenseDate = watch('expenseDate');
 
   const formatDate = (date: Date) =>
     `${date.getFullYear()}-${(date.getMonth() + 1)
@@ -175,7 +172,7 @@ const AddExpense = () => {
     <SafeAreaViewContainer>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={{ flex: 1 }}
+        style={styles.keyboardContainer}
       >
         <ScrollView keyboardShouldPersistTaps="handled">
           <Header
@@ -195,6 +192,7 @@ const AddExpense = () => {
                 value={value}
                 onChangeText={onChange}
                 placeholder="Electricity Bill"
+                placeholderTextColor="#999"
               />
             )}
           />
@@ -213,6 +211,7 @@ const AddExpense = () => {
                 value={value}
                 onChangeText={onChange}
                 placeholder="utilities"
+                placeholderTextColor="#999"
               />
             )}
           />
@@ -234,6 +233,7 @@ const AddExpense = () => {
                 }
                 keyboardType="decimal-pad"
                 placeholder="Enter amount"
+                placeholderTextColor="#999"
               />
             )}
           />
@@ -252,7 +252,9 @@ const AddExpense = () => {
                   style={styles.dateButton}
                   onPress={() => setShowDatePicker(true)}
                 >
-                  <Text>{formatDisplayDate(value)}</Text>
+                  <Text style={styles.dateButtonText}>
+                    {formatDisplayDate(value)}
+                  </Text>
                   <Ionicons name="calendar-outline" size={20} />
                 </TouchableOpacity>
 
@@ -287,13 +289,7 @@ const AddExpense = () => {
               onPress={handleCancel}
               disabled={isPending}
             >
-              <Text
-                style={{
-                  fontFamily: fontFamily.MONTSERRAT.medium,
-                }}
-              >
-                Cancel
-              </Text>
+              <Text style={styles.cancelBtnText}>Cancel</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -301,12 +297,7 @@ const AddExpense = () => {
               onPress={handleSubmit(onSubmit)}
               disabled={isPending}
             >
-              <Text
-                style={{
-                  color: '#fff',
-                  fontFamily: fontFamily.MONTSERRAT.semiBold,
-                }}
-              >
+              <Text style={styles.submitBtnText}>
                 {isPending ? 'Adding...' : 'Add Expense'}
               </Text>
             </TouchableOpacity>
@@ -320,6 +311,9 @@ const AddExpense = () => {
 /* -------------------- Styles -------------------- */
 
 const styles = StyleSheet.create({
+  keyboardContainer: {
+    flex: 1,
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -334,13 +328,19 @@ const styles = StyleSheet.create({
     marginTop: 16,
     marginBottom: 6,
     fontFamily: fontFamily.MONTSERRAT.semiBold,
+    fontSize: 14,
+    opacity: 0.8,
+    color: '#000',
   },
   input: {
     borderWidth: 1,
     borderColor: '#e5e7eb',
     borderRadius: 8,
-    fontFamily: fontFamily.MONTSERRAT.regular,
+    fontFamily: fontFamily.MONTSERRAT.medium,
     padding: 12,
+    fontSize: 16,
+    color: '#000',
+    backgroundColor: '#fff',
   },
   inputError: {
     borderColor: '#ef4444',
@@ -359,6 +359,12 @@ const styles = StyleSheet.create({
     padding: 12,
     flexDirection: 'row',
     justifyContent: 'space-between',
+    backgroundColor: '#fff',
+  },
+  dateButtonText: {
+    fontFamily: fontFamily.MONTSERRAT.medium,
+    fontSize: 16,
+    color: '#000',
   },
   buttonRow: {
     flexDirection: 'row',
@@ -378,6 +384,14 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     backgroundColor: '#ef4444',
     alignItems: 'center',
+  },
+  cancelBtnText: {
+    fontFamily: fontFamily.MONTSERRAT.medium,
+    color: '#000',
+  },
+  submitBtnText: {
+    color: '#fff',
+    fontFamily: fontFamily.MONTSERRAT.semiBold,
   },
 });
 

@@ -31,3 +31,14 @@ export const editLibrarySchema = yup.object({
     .integer('Seats must be a whole number')
     .required('Seats are required'),
 });
+
+export const editStudentSchema = yup.object({
+  name: yup
+    .string()
+    .min(3, 'Name must be at least 3 characters')
+    .required('Name is required'),
+  phone: yup
+    .string()
+    .matches(/^\d{10}$/, 'Phone number must be exactly 10 digits')
+    .required('Phone number is required'),
+});
