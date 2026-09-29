@@ -5,7 +5,6 @@ export const getUserProfile = async () => {
     const response = await apiClientWithAuth(
       ENDPOINTS.PROFILE.GET_USER_PROFILE,
     );
-    console.log('Response for user profile', response);
 
     return response.data;
   } catch (error) {
@@ -14,7 +13,6 @@ export const getUserProfile = async () => {
 };
 
 export const updateUserProfile = async updateData => {
-  console.log('updaet dagta in service', updateData);
 
   try {
     const response = await apiClientWithAuth.patch(

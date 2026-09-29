@@ -23,17 +23,18 @@ Line numbers refer to commit `main` as of 29 Sep 2026. Backend findings, the sys
 
 ## 1. Security and release
 
-- [ ] **FS1 · P0 · Play Store upload key passwords are public.**
+- [x] **FS1 · P0 · Play Store upload key passwords are public.**
   Where: `android/gradle.properties:46–49`.
   Problem: the upload keystore alias and passwords are committed in a public repo, and the password is weak. The keystore file itself isn't in the repo, but anyone who ever gets it now has everything needed to sign an update as you.
   Fix direction: move signing values out of the repo (your user-level Gradle properties or CI secrets), change the keystore passwords, and if the keystore file was ever shared or uploaded anywhere, ask Google Play to reset the upload key.
+  **Status:** values removed from the repo (`fix/security-hotfixes`). Still to do by the owner: change the keystore passwords, because the old ones stay in git history.
 
-- [ ] **FS2 · P1 · Release builds allow plain HTTP to any server.**
+- [x] **FS2 · P1 · Release builds allow plain HTTP to any server.**
   Where: `android/app/src/main/AndroidManifest.xml:5` (`usesCleartextTraffic="true"`), `res/xml/network_security_config.xml` (a LAN IP).
   Problem: this is in the *main* manifest, so the store build allows unencrypted traffic too. It's only needed for local development.
   Fix direction: keep cleartext settings in the debug manifest only.
 
-- [ ] **FS3 · P1 · Passwords and tokens written to device logs.**
+- [x] **FS3 · P1 · Passwords and tokens written to device logs.**
   Where: `features/auth/authServices/authServices.ts:9` logs the login payload (password), `:16` logs the full response (token), `components/SplashScreen.tsx:24` logs the stored auth data (token). There are 79 `console.*` calls in `src/`.
   Problem: on Android, release builds still write `console` output to the system log, which other tools on the device can read.
   Fix direction: remove sensitive logs, and strip `console` calls from release builds with a Babel plugin.

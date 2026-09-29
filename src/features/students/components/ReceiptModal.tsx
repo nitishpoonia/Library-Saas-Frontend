@@ -315,12 +315,10 @@ const ReceiptModal: React.FC<ReceiptModalProps> = ({
         fileName: data.receipt_number,
         directory: Platform.OS === 'ios' ? 'Documents' : 'Downloads',
       });
-      console.log('Generated pdf', pdf);
 
       if (!pdf.filePath) throw new Error('PDF path missing');
       const destPath = `${RNFS.DownloadDirectoryPath}/${data.receipt_number}.pdf`;
 
-      console.log('Destpath', destPath);
       await RNFS.copyFile(pdf.filePath, destPath);
       await RNFS.scanFile(destPath);
       onClose();
@@ -337,7 +335,6 @@ const ReceiptModal: React.FC<ReceiptModalProps> = ({
       //   saveToFiles: true,
       // });
     } catch (error: any) {
-      console.log('PDF error', error);
 
       if (error?.message !== 'User did not share') {
         Alert.alert('Error', 'Could not generate PDF. Please try again.');

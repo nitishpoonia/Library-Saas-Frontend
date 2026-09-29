@@ -98,7 +98,6 @@ const authSlice = createSlice({
     },
 
     setSignupError: (state, action: PayloadAction<string>) => {
-      console.log('action payload', action.payload);
       state.signUpError = action.payload;
       state.signUpLoading = false;
     },

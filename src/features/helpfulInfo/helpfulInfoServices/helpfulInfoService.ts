@@ -5,7 +5,6 @@ export const getListofOverdueStudents = async () => {
     const response = await apiClientWithAuth.get(
       ENDPOINTS.HELPFULINFO.OVERDUE_STUDENT_LIST,
     );
-    console.log('Response', response);
 
     return response.data;
   } catch (error) {
@@ -19,7 +18,6 @@ export const getListofExpiringSoonStudens = async () => {
     const response = await apiClientWithAuth.get(
       ENDPOINTS.HELPFULINFO.EXPIRING_SOON,
     );
-    console.log('Response', response);
 
     return response.data;
   } catch (error) {

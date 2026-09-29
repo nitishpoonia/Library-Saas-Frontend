@@ -52,12 +52,9 @@ const SignIn = () => {
       identifier: data.identifier.trim().toLowerCase(),
       password: data.password,
     };
-    console.log('Data for pyalod', payload);
-    console.log('data', data);
 
     mutate(payload, {
       onSuccess: response => {
-        console.log('Success response', response);
         dispatch(setSignInData(response));
         Toast.show({
           type: 'success',
