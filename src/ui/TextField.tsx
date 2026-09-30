@@ -4,12 +4,12 @@ import { Controller, type Control, type FieldValues, type Path } from "react-hoo
 import { Text } from "./Text";
 import { colors, fonts, radius, spacing } from "./theme";
 
-type Props = TextInputProps & { label: string; error?: string; hint?: string };
+type Props = TextInputProps & { label?: string; error?: string; hint?: string };
 
 export const TextField = forwardRef<TextInput, Props>(function TextField({ label, error, hint, style, ...rest }, ref) {
   return (
     <View style={styles.wrap}>
-      <Text variant="label">{label}</Text>
+      {label ? <Text variant="label">{label}</Text> : null}
       <TextInput
         ref={ref}
         placeholderTextColor={colors.textFaint}

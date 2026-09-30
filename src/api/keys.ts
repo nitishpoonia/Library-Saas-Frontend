@@ -8,4 +8,10 @@ export const keys = {
   library: (libraryId: number) => ["library", libraryId] as const,
   libraryDetails: (libraryId: number) => ["library", libraryId, "details"] as const,
   dashboard: (libraryId: number, month?: string) => ["library", libraryId, "dashboard", month ?? "current"] as const,
+  students: (libraryId: number, filter?: { status: string; search: string }) =>
+    filter ? (["library", libraryId, "students", filter] as const) : (["library", libraryId, "students"] as const),
+  student: (libraryId: number, studentId: number) => ["library", libraryId, "student", studentId] as const,
+  availability: (libraryId: number, params: Record<string, string | number>) =>
+    ["library", libraryId, "availability", params] as const,
+  receipt: (libraryId: number, paymentId: number) => ["library", libraryId, "receipt", paymentId] as const,
 };

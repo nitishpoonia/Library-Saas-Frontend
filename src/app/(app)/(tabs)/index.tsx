@@ -1,9 +1,11 @@
+import { router } from "expo-router";
 import { StyleSheet, View } from "react-native";
+import type { StudentStatusFilter } from "@/features/students/api";
 import { useDashboard } from "@/features/libraries/queries";
 import { subscriptionLabel } from "@/features/libraries/subscriptionLabel";
 import { formatMonth, formatRupees } from "@/lib/format";
 import { useLibrary } from "@/session/CurrentLibrary";
-import { Badge, Card, ErrorView, LoadingView, Screen, StatCard, Text, colors, spacing } from "@/ui";
+import { Badge, Card, ErrorView, LoadingView, Screen, Section, StatCard, Text, colors, spacing } from "@/ui";
 
 export default function HomeScreen() {
   const library = useLibrary();
@@ -35,20 +37,21 @@ export default function HomeScreen() {
 
       <Section title="Needs attention">
         <View style={styles.row}>
-          <StatCard style={styles.half} label="Overdue" value={String(d.students.overdue)} tone={d.students.overdue ? "danger" : "default"} hint="Seat held, not renewed" />
-          <StatCard style={styles.half} label="Ending in 7 days" value={String(d.students.expiringSoon)} tone={d.students.expiringSoon ? "warning" : "default"} hint="Not renewed yet" />
+          <StatCard style={styles.half} label="Overdue" value={String(d.students.overdue)} tone={d.students.overdue ? "danger" : "default"} hint="Seat held, not renewed" onPress={() => openStudents("overdue")} />
+          <StatCard style={styles.half} label="Ending in 7 days" value={String(d.students.expiringSoon)} tone={d.students.expiringSoon ? "warning" : "default"} hint="Not renewed yet" onPress={() => openStudents("expiring")} />
         </View>
         <StatCard
           label="Fees pending"
           value={formatRupees(d.pendingFees)}
           tone={d.pendingFees > 0 ? "warning" : "success"}
           hint={`${d.students.withPendingFees} student${d.students.withPendingFees === 1 ? "" : "s"}`}
+          onPress={() => openStudents("pending")}
         />
       </Section>
 
       <Section title="Today">
         <View style={styles.row}>
-          <StatCard style={styles.half} label="Active students" value={String(d.students.active)} />
+          <StatCard style={styles.half} label="Active students" value={String(d.students.active)} onPress={() => openStudents("active")} />
           <StatCard style={styles.half} label="Seats in use" value={`${d.seats.inUse} / ${d.seats.total}`} hint={`${d.seats.free} free`} />
         </View>
       </Section>
@@ -66,18 +69,12 @@ export default function HomeScreen() {
   );
 }
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <View style={styles.section}>
-      <Text variant="heading">{title}</Text>
-      {children}
-    </View>
-  );
+function openStudents(status: StudentStatusFilter) {
+  router.navigate({ pathname: "/students", params: { status } });
 }
 
 const styles = StyleSheet.create({
   header: { gap: spacing.sm },
-  section: { gap: spacing.md },
   row: { flexDirection: "row", gap: spacing.md },
   half: { flex: 1 },
   warning: { backgroundColor: colors.dangerSoft, borderColor: "#FECACA" },

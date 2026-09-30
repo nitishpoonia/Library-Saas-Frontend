@@ -37,6 +37,12 @@ function AppStack() {
       <Stack.Protected guard={hasBranch}>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="branches/new" options={{ title: "New branch", presentation: "modal" }} />
+        <Stack.Screen name="students/new" options={{ title: "Add student" }} />
+        <Stack.Screen name="students/[studentId]/index" options={{ title: "" }} />
+        <Stack.Screen name="students/[studentId]/edit" options={{ title: "Edit student" }} />
+        <Stack.Screen name="students/[studentId]/renew" options={{ title: "Renew membership" }} />
+        <Stack.Screen name="memberships/[membershipId]/pay" options={{ title: "Collect fee" }} />
+        <Stack.Screen name="receipts/[paymentId]" options={{ title: "Receipt" }} />
       </Stack.Protected>
       <Stack.Protected guard={!hasBranch}>
         <Stack.Screen name="setup" options={{ headerShown: false }} />
