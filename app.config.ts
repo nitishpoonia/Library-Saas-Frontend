@@ -51,6 +51,24 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       },
     ],
     "@react-native-community/datetimepicker",
+    [
+      "expo-build-properties",
+      {
+        android: {
+          // Smaller, obfuscated release builds (REVIEW FS6).
+          enableMinifyInReleaseBuilds: true,
+          enableShrinkResourcesInReleaseBuilds: true,
+          // Razorpay's checkout uses reflection; these are the rules from its integration guide.
+          extraProguardRules: [
+            "-keepattributes *Annotation*",
+            "-dontwarn com.razorpay.**",
+            "-keep class com.razorpay.** {*;}",
+            "-optimizations !method/inlining/",
+            "-keepclasseswithmembers class * { public void onPayment*(...); }",
+          ].join("\n"),
+        },
+      },
+    ],
   ],
   experiments: {
     typedRoutes: true,

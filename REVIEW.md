@@ -45,14 +45,16 @@ Line numbers refer to commit `main` as of 29 Sep 2026. Backend findings, the sys
   Where: `features/auth/authSlice/authSlice.ts:156–167`, `features/settings/screens/Menu.tsx:93`.
   Problem: logout clears Keychain and AsyncStorage, but not the React Query cache, which holds students and payments for up to 30 minutes. A different owner who logs in on the same phone can see the previous owner's lists until they refetch. The device's push token also stays attached to the old owner on the server, so that owner's alerts keep arriving on this phone.
   Fix direction: on logout, clear the query cache, call the backend logout, and unregister the device token **(needs backend: device token table, D8)**.
-  **Status:** fixed in the Expo app (`feat/expo-app`): sign-out revokes the session on the server and clears the query cache. Device token removal comes with push notifications.
+  **Status:** fixed: sign-out revokes the session, removes this phone's push token and clears the cache; "Sign out on all phones" in Menu.
 
 - [ ] **FS5 · P3 · `google-services.json` is in a public repo.**
   Firebase config isn't a secret by itself, but make sure the API key in it is restricted to your app in Google Cloud, and consider Firebase App Check.
+  **Status:** still to do by the owner: restrict the Android API key in Google Cloud to package com.librarysaas and its signing certificate.
 
-- [ ] **FS6 · P2 · Code shrinking is off in release builds.**
+- [x] **FS6 · P2 · Code shrinking is off in release builds.**
   Where: `android/app/build.gradle:60` (`enableProguardInReleaseBuilds = false`).
   Problem: bigger APK and no obfuscation. Turn it on and test a release build, since some libraries need keep rules.
+  **Status:** fixed in the Expo app (`feat/expo-settings`): minify and resource shrinking on for release builds, with Razorpay's keep rules.
 
 ---
 
@@ -130,14 +132,16 @@ Line numbers refer to commit `main` as of 29 Sep 2026. Backend findings, the sys
 
 ## 4. Notifications
 
-- [ ] **FN1 · P1 · Push setup runs inside the Dashboard screen.**
+- [x] **FN1 · P1 · Push setup runs inside the Dashboard screen.**
   Where: `Dashbaord.tsx:46`, `services/notificationService.js:74–76`.
   Problem: the token is re-registered every time the dashboard mounts, and the permission prompt appears the first time it opens. More importantly, Firebase requires the background message handler to be registered outside React, at app start (in `index.js`). Registered inside a component, it isn't there when the app is killed, so background messages aren't handled.
   Fix direction: register the background handler at app start, and run permission plus token registration once after login, in an app-level hook.
+  **Status:** fixed in the Expo app (`feat/expo-settings`): push is set up once at app level after sign-in, not in a screen; the token is re-sent when it changes.
 
-- [ ] **FN2 · P2 · Notifications do nothing when opened.**
+- [x] **FN2 · P2 · Notifications do nothing when opened.**
   Where: `notificationService.js:64–72`.
   Problem: foreground messages are only logged, and tapping a notification doesn't open the relevant screen (for example the expiring-soon list).
+  **Status:** fixed in the Expo app (`feat/expo-settings`): notifications show while the app is open, and a tap opens the right branch and screen.
 
 ---
 
@@ -230,6 +234,7 @@ Grouping by feature is the right choice. The problems are naming and what lives 
 
 - [ ] **FC5 · P2 · No crash reporting.**
   In production you won't know when the app crashes on a user's phone. Add a crash reporter before real users arrive.
+  **Status:** still open: pick a crash reporter (Sentry has an Expo plugin) and add its DSN.
 
 - [x] **FC6 · P3 · README is the React Native template.**
   It should say how to run the app against each environment and how to make a release build.
