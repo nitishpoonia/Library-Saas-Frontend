@@ -1,12 +1,25 @@
 import type { ReactNode } from "react";
-import { Pressable, StyleSheet, View, type ViewStyle } from "react-native";
+import { Platform, Pressable, View, type ColorValue, type StyleProp, type ViewStyle } from "react-native";
 import { Text } from "./Text";
-import { colors, radius, spacing } from "./theme";
+import { makeStyles, radius, spacing, useTheme } from "./theme";
 
-export function Card({ children, onPress, style }: { children: ReactNode; onPress?: () => void; style?: ViewStyle }) {
+type CardProps = { children: ReactNode; onPress?: () => void; style?: StyleProp<ViewStyle>; accessibilityLabel?: string };
+
+/**
+ * A grouped block of content: an inset-grouped cell on iOS, a filled card on Android.
+ */
+export function Card({ children, onPress, style, accessibilityLabel }: CardProps) {
+  const t = useTheme();
+  const styles = useStyles();
   if (onPress) {
     return (
-      <Pressable accessibilityRole="button" onPress={onPress} style={({ pressed }) => [styles.card, style, pressed && styles.pressed]}>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={accessibilityLabel}
+        onPress={onPress}
+        android_ripple={{ color: t.colors.ripple, foreground: true }}
+        style={({ pressed }) => [styles.card, style, Platform.OS === "ios" && pressed && styles.pressed]}
+      >
         {children}
       </Pressable>
     );
@@ -14,7 +27,9 @@ export function Card({ children, onPress, style }: { children: ReactNode; onPres
   return <View style={[styles.card, style]}>{children}</View>;
 }
 
-/** A number with a label, like the old InfoCard. */
+export type Tone = "default" | "success" | "warning" | "danger";
+
+/** A number with a label, for dashboards and summaries. */
 export function StatCard({
   label,
   value,
@@ -26,32 +41,32 @@ export function StatCard({
   label: string;
   value: string;
   hint?: string;
-  tone?: "default" | "success" | "warning" | "danger";
+  tone?: Tone;
   onPress?: () => void;
-  style?: ViewStyle;
+  style?: StyleProp<ViewStyle>;
 }) {
-  const valueColor =
-    tone === "success" ? colors.success : tone === "warning" ? colors.warning : tone === "danger" ? colors.danger : colors.text;
+  const t = useTheme();
+  const valueColor: ColorValue =
+    tone === "success" ? t.colors.success : tone === "warning" ? t.colors.warning : tone === "danger" ? t.colors.danger : t.colors.text;
   return (
-    <Card onPress={onPress} style={style}>
-      <Text variant="label">{label}</Text>
-      <Text variant="value" color={valueColor} style={styles.value}>
+    <Card onPress={onPress} style={style} accessibilityLabel={`${label}: ${value}${hint ? `, ${hint}` : ""}`}>
+      <Text variant={Platform.OS === "ios" ? "label" : "caption"}>{label}</Text>
+      <Text variant="value" color={valueColor} numberOfLines={1} adjustsFontSizeToFit>
         {value}
       </Text>
-      {hint ? <Text variant="caption">{hint}</Text> : null}
+      {hint ? <Text variant="label">{hint}</Text> : null}
     </Card>
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((t) => ({
   card: {
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
+    backgroundColor: t.colors.surface,
     borderRadius: radius.lg,
+    borderCurve: "continuous",
     padding: spacing.lg,
     gap: spacing.xs,
+    overflow: "hidden",
   },
-  pressed: { opacity: 0.85 },
-  value: { marginTop: spacing.xs },
-});
+  pressed: { opacity: 0.6 },
+}));

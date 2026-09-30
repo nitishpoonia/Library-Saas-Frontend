@@ -1,16 +1,36 @@
-import Ionicons from "@expo/vector-icons/Ionicons";
 import { Stack, router, useLocalSearchParams } from "expo-router";
-import { Alert, Linking, Pressable, StyleSheet, View } from "react-native";
+import { Alert, Linking, Platform, Pressable, View } from "react-native";
 import type { Membership, Payment } from "@/api/types";
 import { paymentModeLabel } from "@/features/payments/paymentModes";
 import { membershipStatus } from "@/features/students/membershipStatus";
 import { useRemoveStudent, useStudent } from "@/features/students/queries";
 import { formatDate, formatPhone, formatRupees } from "@/lib/format";
 import { useLibrary } from "@/session/CurrentLibrary";
-import { Badge, Button, Card, ErrorView, LoadingView, Screen, Section, Text, colors, spacing } from "@/ui";
+import {
+  Badge,
+  Button,
+  Card,
+  ErrorView,
+  HeaderAction,
+  Icon,
+  ListRow,
+  ListSection,
+  LoadingView,
+  Screen,
+  Section,
+  Text,
+  icons,
+  makeStyles,
+  spacing,
+  tileColors,
+  useTheme,
+  type IconName,
+} from "@/ui";
 
 export default function StudentScreen() {
   const library = useLibrary();
+  const t = useTheme();
+  const styles = useStyles();
   const { studentId } = useLocalSearchParams<{ studentId: string }>();
   const id = Number(studentId);
   const student = useStudent(library.id, id);
@@ -31,39 +51,40 @@ export default function StudentScreen() {
       ],
     );
 
-  return (
-    <Screen edges={["bottom", "left", "right"]} refreshing={student.isRefetching} onRefresh={() => student.refetch()}>
-      <Stack.Screen
-        options={{
-          title: s.name,
-          headerRight: () =>
-            s.archived ? null : (
-              <Pressable
-                accessibilityRole="button"
-                onPress={() => router.push({ pathname: "/students/[studentId]/edit", params: { studentId } })}
-              >
-                <Text variant="bodyStrong" color={colors.primary}>
-                  Edit
-                </Text>
-              </Pressable>
-            ),
-        }}
-      />
+  const renew = () => router.push({ pathname: "/students/[studentId]/renew", params: { studentId } });
 
+  return (
+    <Screen refreshing={student.isRefetching} onRefresh={() => student.refetch()}>
+      <Stack.Screen options={{ title: s.name }} />
+      {!s.archived ? (
+        <HeaderAction
+          label="Edit"
+          icon={icons.edit}
+          onPress={() => router.push({ pathname: "/students/[studentId]/edit", params: { studentId } })}
+        />
+      ) : null}
+
+      {/* Contact card: phone number with quick actions, like a Contacts card. */}
       <View style={styles.contact}>
-        <Text variant="body" color={colors.textMuted} style={styles.flex}>
+        <Text variant="body" color={t.colors.textMuted}>
           {formatPhone(s.phone)}
         </Text>
-        <IconButton icon="call-outline" label="Call" onPress={() => Linking.openURL(`tel:${s.phone}`)} />
-        <IconButton icon="logo-whatsapp" label="WhatsApp" onPress={() => Linking.openURL(`https://wa.me/${s.phone.replace("+", "")}`)} />
+        <View style={styles.quick}>
+          <QuickAction icon={icons.call} label="Call" onPress={() => Linking.openURL(`tel:${s.phone}`)} />
+          <QuickAction
+            icon={icons.message}
+            label="WhatsApp"
+            onPress={() => Linking.openURL(`https://wa.me/${s.phone.replace("+", "")}`)}
+          />
+        </View>
       </View>
 
       {s.pendingAmount > 0 ? (
         <Card style={styles.pending}>
-          <Text variant="label" color="#92400E">
+          <Text variant="label" color={t.colors.warningText}>
             Fees pending
           </Text>
-          <Text variant="value" color={colors.warning}>
+          <Text variant="value" color={t.colors.warning}>
             {formatRupees(s.pendingAmount)}
           </Text>
         </Card>
@@ -71,41 +92,39 @@ export default function StudentScreen() {
 
       {current ? (
         <Section title="Current membership">
-          <MembershipCard m={current} />
+          <Card>
+            <MembershipSummary m={current} />
+          </Card>
           <View style={styles.actions}>
-            {current.pendingAmount > 0 ? (
-              <Button style={styles.flex} title="Collect fee" onPress={() => goPay(current, s.name)} />
-            ) : null}
-            <Button
-              style={styles.flex}
-              title="Renew"
-              variant={current.pendingAmount > 0 ? "secondary" : "primary"}
-              onPress={() => router.push({ pathname: "/students/[studentId]/renew", params: { studentId } })}
-            />
+            {current.pendingAmount > 0 ? <Button style={styles.flex} title="Collect fee" onPress={() => goPay(current, s.name)} /> : null}
+            <Button style={styles.flex} title="Renew" variant={current.pendingAmount > 0 ? "secondary" : "primary"} onPress={renew} />
           </View>
         </Section>
       ) : (
-        <Card>
+        <Card style={styles.noSeat}>
           <Text variant="bodyStrong">{s.archived ? "Removed" : "No active seat"}</Text>
           <Text variant="caption">Renew to give them a seat again.</Text>
-          <Button
-            title="Renew membership"
-            onPress={() => router.push({ pathname: "/students/[studentId]/renew", params: { studentId } })}
-          />
+          <Button title="Renew membership" onPress={renew} />
         </Card>
       )}
 
       <Section title="History">
         {s.memberships.map((m) => (
-          <Card key={m.id} style={styles.history}>
-            <MembershipCard m={m} flat />
-            {m.payments.map((p) => (
-              <PaymentRow key={p.id} p={p} />
-            ))}
+          <View key={m.id} style={styles.history}>
+            <Card>
+              <MembershipSummary m={m} />
+            </Card>
+            {m.payments.length ? (
+              <ListSection>
+                {m.payments.map((p) => (
+                  <PaymentRow key={p.id} p={p} />
+                ))}
+              </ListSection>
+            ) : null}
             {m.pendingAmount > 0 && m.id !== current?.id ? (
               <Button title={`Collect ${formatRupees(m.pendingAmount)}`} variant="secondary" onPress={() => goPay(m, s.name)} />
             ) : null}
-          </Card>
+          </View>
         ))}
       </Section>
 
@@ -121,12 +140,13 @@ function goPay(m: Membership, name: string) {
   });
 }
 
-function MembershipCard({ m, flat }: { m: Membership; flat?: boolean }) {
+function MembershipSummary({ m }: { m: Membership }) {
+  const styles = useStyles();
   const status = membershipStatus(m);
-  const body = (
+  return (
     <View style={styles.membership}>
       <View style={styles.rowBetween}>
-        <Text variant="bodyStrong">
+        <Text variant="bodyStrong" style={styles.flex}>
           Seat {m.seatLabel} · {m.timing}
         </Text>
         <Badge label={status.label} tone={status.tone} />
@@ -140,48 +160,59 @@ function MembershipCard({ m, flat }: { m: Membership; flat?: boolean }) {
       </Text>
     </View>
   );
-  return flat ? body : <Card>{body}</Card>;
 }
 
 function PaymentRow({ p }: { p: Payment }) {
   return (
+    <ListRow
+      title={`${formatRupees(p.amount)} · ${paymentModeLabel(p.mode)}${p.voided ? " (cancelled)" : ""}`}
+      subtitle={`${p.receiptNumber} · ${formatDate(p.paidAt.slice(0, 10))}`}
+      icon={icons.receipt}
+      iconColor={p.voided ? tileColors.gray : tileColors.green}
+      onPress={() => router.push({ pathname: "/receipts/[paymentId]", params: { paymentId: String(p.id) } })}
+    />
+  );
+}
+
+/** Round icon-over-label buttons, like the actions on an iOS contact card. */
+function QuickAction({ icon, label, onPress }: { icon: IconName; label: string; onPress: () => void }) {
+  const t = useTheme();
+  const styles = useStyles();
+  return (
     <Pressable
       accessibilityRole="button"
-      onPress={() => router.push({ pathname: "/receipts/[paymentId]", params: { paymentId: String(p.id) } })}
-      style={styles.payment}
+      accessibilityLabel={label}
+      onPress={onPress}
+      android_ripple={{ color: t.colors.ripple, foreground: true }}
+      style={({ pressed }) => [styles.quickButton, Platform.OS === "ios" && pressed && styles.pressed]}
     >
-      <Ionicons name="receipt-outline" size={18} color={colors.textMuted} />
-      <View style={styles.flex}>
-        <Text variant="body" style={p.voided ? styles.voided : undefined}>
-          {formatRupees(p.amount)} · {paymentModeLabel(p.mode)}
-        </Text>
-        <Text variant="caption">
-          {p.receiptNumber} · {formatDate(p.paidAt.slice(0, 10))}
-          {p.voided ? " · Cancelled" : ""}
-        </Text>
-      </View>
-      <Ionicons name="chevron-forward" size={16} color={colors.textFaint} />
+      <Icon name={icon} size={20} color={Platform.OS === "ios" ? t.colors.primary : t.colors.onSecondaryContainer} />
+      <Text variant="label" color={Platform.OS === "ios" ? t.colors.primary : t.colors.onSecondaryContainer}>
+        {label}
+      </Text>
     </Pressable>
   );
 }
 
-function IconButton({ icon, label, onPress }: { icon: React.ComponentProps<typeof Ionicons>["name"]; label: string; onPress: () => void }) {
-  return (
-    <Pressable accessibilityRole="button" accessibilityLabel={label} onPress={onPress} style={styles.iconButton}>
-      <Ionicons name={icon} size={20} color={colors.primary} />
-    </Pressable>
-  );
-}
-
-const styles = StyleSheet.create({
+const useStyles = makeStyles((t) => ({
   flex: { flex: 1 },
-  contact: { flexDirection: "row", alignItems: "center", gap: spacing.sm },
-  iconButton: { padding: spacing.sm, borderRadius: 999, backgroundColor: colors.primarySoft },
-  pending: { backgroundColor: colors.warningSoft, borderColor: "#FDE68A" },
+  contact: { gap: spacing.md },
+  quick: { flexDirection: "row", gap: spacing.sm },
+  quickButton: {
+    flex: 1,
+    alignItems: "center",
+    gap: spacing.xs,
+    paddingVertical: spacing.md,
+    borderRadius: Platform.OS === "ios" ? 14 : 16,
+    borderCurve: "continuous",
+    backgroundColor: Platform.OS === "ios" ? t.colors.surface : t.colors.secondaryContainer,
+    overflow: "hidden",
+  },
+  pressed: { opacity: 0.6 },
+  pending: { backgroundColor: t.colors.warningSoft },
+  noSeat: { gap: spacing.sm },
   actions: { flexDirection: "row", gap: spacing.md },
   membership: { gap: spacing.xs },
-  rowBetween: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: spacing.sm },
-  history: { gap: spacing.md },
-  payment: { flexDirection: "row", alignItems: "center", gap: spacing.md, paddingVertical: spacing.xs },
-  voided: { textDecorationLine: "line-through", color: colors.textFaint },
-});
+  rowBetween: { flexDirection: "row", alignItems: "center", gap: spacing.sm },
+  history: { gap: spacing.sm },
+}));

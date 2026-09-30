@@ -1,14 +1,27 @@
-import Ionicons from "@expo/vector-icons/Ionicons";
 import { Stack, router, useLocalSearchParams } from "expo-router";
 import { useState } from "react";
-import { Alert, StyleSheet, View } from "react-native";
+import { Alert, Platform, View, type ColorValue } from "react-native";
 import { errorMessage } from "@/api/errors";
 import { paymentModeLabel } from "@/features/payments/paymentModes";
 import { useReceipt, useVoidPayment } from "@/features/payments/queries";
 import { sendReceiptOnWhatsApp, shareReceiptPdf } from "@/features/payments/receipt";
 import { formatDate, formatRupees } from "@/lib/format";
 import { useCanManage, useLibrary } from "@/session/CurrentLibrary";
-import { Badge, Button, Card, ErrorView, LoadingView, Screen, Text, TextField, colors, spacing } from "@/ui";
+import {
+  Badge,
+  Button,
+  Card,
+  ErrorView,
+  Icon,
+  LoadingView,
+  Screen,
+  Text,
+  TextField,
+  icons,
+  makeStyles,
+  spacing,
+  useTheme,
+} from "@/ui";
 
 /**
  * A receipt, loaded from the server so it can be re-shared any time, from any phone
@@ -22,6 +35,8 @@ export default function ReceiptScreen() {
   const voidPayment = useVoidPayment(library.id, Number(paymentId));
   const [sharing, setSharing] = useState(false);
   const [voidReason, setVoidReason] = useState<string | null>(null);
+  const t = useTheme();
+  const styles = useStyles();
 
   if (receipt.isLoading) return <LoadingView />;
   if (!receipt.data) return <ErrorView error={receipt.error} onRetry={() => receipt.refetch()} />;
@@ -48,13 +63,13 @@ export default function ReceiptScreen() {
   };
 
   return (
-    <Screen edges={["bottom", "left", "right"]}>
+    <Screen>
       <Stack.Screen options={{ title: `Receipt ${r.receiptNumber}` }} />
 
       {fresh ? (
         <View style={styles.success}>
-          <Ionicons name="checkmark-circle" size={28} color={colors.success} />
-          <Text variant="subheading" color={colors.successText}>
+          <Icon name={icons.checkCircle} size={28} color={t.colors.success} />
+          <Text variant="subheading" color={t.colors.successText}>
             Payment recorded
           </Text>
         </View>
@@ -70,12 +85,22 @@ export default function ReceiptScreen() {
         <Row label="Period" value={`${formatDate(r.periodStart, false)} – ${formatDate(r.periodEnd)}`} />
         <Row label="Paid now" value={`${formatRupees(r.amount)} · ${paymentModeLabel(r.mode)}`} strong />
         <Row label="Total paid" value={`${formatRupees(r.totalPaid)} of ${formatRupees(r.fee)}`} />
-        {r.pendingAmount > 0 ? <Row label="Pending" value={formatRupees(r.pendingAmount)} tone={colors.warning} /> : null}
+        {r.pendingAmount > 0 ? <Row label="Pending" value={formatRupees(r.pendingAmount)} tone={t.colors.warning} /> : null}
         {r.notes ? <Row label="Note" value={r.notes} /> : null}
       </Card>
 
-      <Button title="Send on WhatsApp" icon={<Ionicons name="logo-whatsapp" size={18} color="#FFFFFF" />} onPress={() => sendReceiptOnWhatsApp(r)} />
-      <Button title="Share PDF" variant="secondary" loading={sharing} onPress={share} />
+      <Button
+        title="Send on WhatsApp"
+        icon={<Icon name={icons.message} size={18} color={t.colors.onPrimary} />}
+        onPress={() => sendReceiptOnWhatsApp(r)}
+      />
+      <Button
+        title="Share PDF"
+        variant="secondary"
+        icon={<Icon name={icons.share} size={18} color={Platform.OS === "ios" ? t.colors.primary : t.colors.onSecondaryContainer} />}
+        loading={sharing}
+        onPress={share}
+      />
       {fresh ? <Button title="Done" variant="ghost" onPress={() => router.back()} /> : null}
 
       {canManage && !r.voided ? (
@@ -92,7 +117,8 @@ export default function ReceiptScreen() {
   );
 }
 
-function Row({ label, value, strong, tone }: { label: string; value: string; strong?: boolean; tone?: string }) {
+function Row({ label, value, strong, tone }: { label: string; value: string; strong?: boolean; tone?: ColorValue }) {
+  const styles = useStyles();
   return (
     <View style={styles.row}>
       <Text variant="caption">{label}</Text>
@@ -103,10 +129,26 @@ function Row({ label, value, strong, tone }: { label: string; value: string; str
   );
 }
 
-const styles = StyleSheet.create({
-  success: { flexDirection: "row", alignItems: "center", gap: spacing.sm },
+const useStyles = makeStyles((t) => ({
+  success: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+    padding: spacing.md,
+    borderRadius: 14,
+    borderCurve: "continuous",
+    backgroundColor: t.colors.successSoft,
+  },
   card: { gap: spacing.sm },
-  row: { flexDirection: "row", justifyContent: "space-between", gap: spacing.md },
+  row: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "baseline",
+    gap: spacing.md,
+    paddingTop: spacing.sm,
+    borderTopWidth: 0.5,
+    borderTopColor: t.colors.border,
+  },
   value: { flexShrink: 1, textAlign: "right" },
   void: { gap: spacing.md },
-});
+}));

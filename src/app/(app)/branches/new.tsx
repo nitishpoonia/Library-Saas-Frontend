@@ -6,7 +6,7 @@ import { Screen } from "@/ui";
 export default function NewBranchScreen() {
   const { select } = useCurrentLibrary();
   return (
-    <Screen form edges={["bottom", "left", "right"]}>
+    <Screen form>
       <LibraryForm
         submitLabel="Add branch"
         onCreated={(id) => {

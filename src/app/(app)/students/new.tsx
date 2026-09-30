@@ -11,11 +11,12 @@ import { useCreateStudent } from "@/features/students/queries";
 import { cleanPhone, newStudentSchema, type NewStudentValues } from "@/features/students/schemas";
 import { todayLocal } from "@/lib/format";
 import { useLibrary } from "@/session/CurrentLibrary";
-import { Button, ErrorBanner, FormTextField, Screen, Section, Text, colors } from "@/ui";
+import { Button, ErrorBanner, FormTextField, Screen, Section, Text, useTheme } from "@/ui";
 
 export default function NewStudentScreen() {
   const library = useLibrary();
   const create = useCreateStudent(library.id);
+  const t = useTheme();
 
   const form = useForm<NewStudentValues>({
     resolver: zodResolver(newStudentSchema),
@@ -90,7 +91,7 @@ export default function NewStudentScreen() {
   const seatError = form.formState.errors.seatId?.message;
 
   return (
-    <Screen form edges={["bottom", "left", "right"]} footer={<Button title="Add student" onPress={onSubmit} loading={create.isPending} />}>
+    <Screen form footer={<Button title="Add student" onPress={onSubmit} loading={create.isPending} />}>
       <Section title="Student">
         <FormTextField control={form.control} name="name" label="Name" autoCapitalize="words" />
         <FormTextField control={form.control} name="phone" label="Mobile number" keyboardType="phone-pad" placeholder="98765 43210" />
@@ -118,7 +119,7 @@ export default function NewStudentScreen() {
           <Text variant="caption">{validDays ? "Checking free seats…" : "Choose the dates first"}</Text>
         )}
         {seatError ? (
-          <Text variant="caption" color={colors.danger}>
+          <Text variant="label" color={t.colors.danger}>
             {seatError}
           </Text>
         ) : null}

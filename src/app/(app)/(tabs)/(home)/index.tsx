@@ -1,35 +1,47 @@
-import { router } from "expo-router";
-import { StyleSheet, View } from "react-native";
+import { Stack, router } from "expo-router";
+import { View } from "react-native";
 import type { StudentStatusFilter } from "@/features/students/api";
 import { useDashboard } from "@/features/libraries/queries";
 import { subscriptionLabel } from "@/features/libraries/subscriptionLabel";
 import { formatMonth, formatRupees } from "@/lib/format";
 import { useLibrary } from "@/session/CurrentLibrary";
-import { Badge, Card, ErrorView, LoadingView, Screen, Section, StatCard, Text, colors, spacing } from "@/ui";
+import { Badge, Card, ErrorView, Icon, LoadingView, Screen, Section, StatCard, Text, icons, makeStyles, spacing, useTheme } from "@/ui";
 
 export default function HomeScreen() {
   const library = useLibrary();
   const dashboard = useDashboard(library.id);
+  const t = useTheme();
+  const styles = useStyles();
 
-  if (dashboard.isLoading) return <LoadingView />;
-  if (!dashboard.data) return <ErrorView error={dashboard.error} onRetry={() => dashboard.refetch()} />;
+  // The branch name is the page title (a large title on iOS).
+  const title = <Stack.Screen options={{ title: dashboard.data?.library.name ?? library.name }} />;
+
+  if (dashboard.isLoading || !dashboard.data) {
+    return (
+      <>
+        {title}
+        {dashboard.isLoading ? <LoadingView /> : <ErrorView error={dashboard.error} onRetry={() => dashboard.refetch()} />}
+      </>
+    );
+  }
 
   const d = dashboard.data;
   const sub = subscriptionLabel(d.subscription);
 
   return (
     <Screen refreshing={dashboard.isRefetching} onRefresh={() => dashboard.refetch()}>
-      <View style={styles.header}>
-        <Text variant="title">{d.library.name}</Text>
-        <Badge label={sub.text} tone={sub.urgent ? "danger" : "info"} />
-      </View>
+      {title}
+      <Badge label={sub.text} tone={sub.urgent ? "danger" : "info"} />
 
       {!d.subscription.usable ? (
         <Card style={styles.warning}>
-          <Text variant="bodyStrong" color={colors.dangerText}>
-            Your subscription has ended
-          </Text>
-          <Text variant="body" color={colors.dangerText}>
+          <View style={styles.warningTitle}>
+            <Icon name={icons.warning} size={18} color={t.colors.dangerText} />
+            <Text variant="bodyStrong" color={t.colors.dangerText}>
+              Your subscription has ended
+            </Text>
+          </View>
+          <Text variant="caption" color={t.colors.dangerText}>
             You can still see your data, but adding students or fees is paused until the owner renews.
           </Text>
         </Card>
@@ -73,9 +85,9 @@ function openStudents(status: StudentStatusFilter) {
   router.navigate({ pathname: "/students", params: { status } });
 }
 
-const styles = StyleSheet.create({
-  header: { gap: spacing.sm },
+const useStyles = makeStyles((t) => ({
   row: { flexDirection: "row", gap: spacing.md },
   half: { flex: 1 },
-  warning: { backgroundColor: colors.dangerSoft, borderColor: "#FECACA" },
-});
+  warning: { backgroundColor: t.colors.dangerSoft, gap: spacing.sm },
+  warningTitle: { flexDirection: "row", alignItems: "center", gap: spacing.sm },
+}));

@@ -1,28 +1,46 @@
-import { StyleSheet, View } from "react-native";
+import { Platform, View, type ColorValue } from "react-native";
 import { Text } from "./Text";
-import { colors, radius, spacing } from "./theme";
+import { makeStyles, radius, spacing, useTheme, type Theme } from "./theme";
 
 type Tone = "neutral" | "success" | "warning" | "danger" | "info";
 
-const tones: Record<Tone, { bg: string; fg: string }> = {
-  neutral: { bg: "#F3F4F6", fg: colors.textMuted },
-  success: { bg: colors.successSoft, fg: colors.successText },
-  warning: { bg: colors.warningSoft, fg: "#92400E" },
-  danger: { bg: "#FEE2E2", fg: colors.dangerText },
-  info: { bg: colors.primarySoft, fg: colors.primaryDark },
-};
+function tone(t: Theme, value: Tone): { bg: ColorValue; fg: ColorValue } {
+  const c = t.colors;
+  switch (value) {
+    case "neutral":
+      return { bg: c.fill, fg: c.textMuted };
+    case "success":
+      return { bg: c.successSoft, fg: c.successText };
+    case "warning":
+      return { bg: c.warningSoft, fg: c.warningText };
+    case "danger":
+      return { bg: c.dangerSoft, fg: c.dangerText };
+    case "info":
+      return { bg: c.primarySoft, fg: c.onPrimarySoft };
+  }
+}
 
-export function Badge({ label, tone = "neutral" }: { label: string; tone?: Tone }) {
-  const t = tones[tone];
+/** A short status label: a tinted capsule on iOS, a small tonal label on Android. */
+export function Badge({ label, tone: value = "neutral" }: { label: string; tone?: Tone }) {
+  const t = useTheme();
+  const styles = useStyles();
+  const c = tone(t, value);
   return (
-    <View style={[styles.badge, { backgroundColor: t.bg }]}>
-      <Text variant="caption" color={t.fg}>
+    <View style={[styles.badge, { backgroundColor: c.bg }]}>
+      <Text variant="label" color={c.fg} style={styles.text} numberOfLines={1}>
         {label}
       </Text>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  badge: { paddingHorizontal: spacing.sm, paddingVertical: 2, borderRadius: radius.pill, alignSelf: "flex-start" },
-});
+const useStyles = makeStyles(() => ({
+  badge: {
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 3,
+    borderRadius: Platform.OS === "ios" ? radius.pill : 6,
+    alignSelf: "flex-start",
+    flexShrink: 0,
+  },
+  text: Platform.OS === "ios" ? { fontSize: 12, fontWeight: "600" } : { fontSize: 12 },
+}));

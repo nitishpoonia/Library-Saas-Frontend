@@ -1,15 +1,25 @@
-import Ionicons from "@expo/vector-icons/Ionicons";
 import { FlashList } from "@shopify/flash-list";
-import { router, useLocalSearchParams } from "expo-router";
+import { Stack, router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, Pressable, StyleSheet, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { ActivityIndicator, Platform, View } from "react-native";
 import type { StudentStatusFilter } from "@/features/students/api";
-import { StudentCard } from "@/features/students/StudentCard";
+import { StudentRow } from "@/features/students/StudentRow";
 import { useStudents } from "@/features/students/queries";
 import { useDebounced } from "@/lib/useDebounced";
 import { useLibrary } from "@/session/CurrentLibrary";
-import { Chips, EmptyView, ErrorView, LoadingView, Text, TextField, colors, spacing } from "@/ui";
+import {
+  Chips,
+  EmptyView,
+  ErrorView,
+  LoadingView,
+  PrimaryAction,
+  Text,
+  icons,
+  listContentStyle,
+  makeStyles,
+  spacing,
+  useTheme,
+} from "@/ui";
 
 const FILTERS: Array<{ value: StudentStatusFilter; label: string }> = [
   { value: "current", label: "Current" },
@@ -22,6 +32,8 @@ const FILTERS: Array<{ value: StudentStatusFilter; label: string }> = [
 
 export default function StudentsScreen() {
   const library = useLibrary();
+  const t = useTheme();
+  const styles = useStyles();
   const params = useLocalSearchParams<{ status?: StudentStatusFilter }>();
   const [status, setStatus] = useState<StudentStatusFilter>(params.status ?? "current");
   // Home's cards open this tab with a filter, even when the tab is already open.
@@ -35,27 +47,28 @@ export default function StudentsScreen() {
   const items = students.data?.pages.flatMap((p) => p.items) ?? [];
   const total = students.data?.pages[0]?.meta.total;
 
+  // Filters scroll with the list, so the iOS large title can collapse over them.
+  const header = (
+    <View style={styles.header}>
+      <Chips scroll options={FILTERS} value={status} onChange={setStatus} />
+      {total !== undefined ? (
+        <Text variant="label" style={styles.count}>
+          {total} student{total === 1 ? "" : "s"}
+        </Text>
+      ) : null}
+    </View>
+  );
+
   return (
-    <SafeAreaView style={styles.fill} edges={["top", "left", "right"]}>
-      <View style={styles.header}>
-        <View style={styles.titleRow}>
-          <Text variant="title">Students</Text>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Add student"
-            onPress={() => router.push("/students/new")}
-            style={styles.addButton}
-          >
-            <Ionicons name="add" size={22} color="#FFFFFF" />
-            <Text variant="bodyStrong" color="#FFFFFF">
-              Add
-            </Text>
-          </Pressable>
-        </View>
-        <TextField placeholder="Search by name or mobile" value={search} onChangeText={setSearch} autoCorrect={false} />
-        <Chips scroll options={FILTERS} value={status} onChange={setStatus} />
-        {total !== undefined ? <Text variant="caption">{total} student{total === 1 ? "" : "s"}</Text> : null}
-      </View>
+    <View style={styles.page}>
+      {/* The system search field: under the large title on iOS, in the app bar on Android. */}
+      <Stack.SearchBar
+        placeholder="Name or mobile number"
+        onChangeText={(e) => setSearch(e.nativeEvent.text)}
+        onCancelButtonPress={() => setSearch("")}
+        hideWhenScrolling={false}
+        autoCapitalize="none"
+      />
 
       {students.isLoading ? (
         <LoadingView />
@@ -65,11 +78,15 @@ export default function StudentsScreen() {
         <FlashList
           data={items}
           keyExtractor={(s) => String(s.id)}
-          contentContainerStyle={styles.list}
-          ItemSeparatorComponent={() => <View style={{ height: spacing.md }} />}
-          renderItem={({ item }) => (
-            <StudentCard
+          contentInsetAdjustmentBehavior="automatic"
+          contentContainerStyle={listContentStyle}
+          keyboardDismissMode="on-drag"
+          ListHeaderComponent={header}
+          renderItem={({ item, index }) => (
+            <StudentRow
               student={item}
+              first={index === 0}
+              last={index === items.length - 1}
               onPress={() => router.push({ pathname: "/students/[studentId]", params: { studentId: String(item.id) } })}
             />
           )}
@@ -79,31 +96,34 @@ export default function StudentsScreen() {
           onEndReachedThreshold={0.5}
           refreshing={students.isRefetching && !students.isFetchingNextPage}
           onRefresh={() => students.refetch()}
-          ListFooterComponent={students.isFetchingNextPage ? <ActivityIndicator color={colors.primary} /> : null}
+          ListFooterComponent={
+            students.isFetchingNextPage ? (
+              <ActivityIndicator style={styles.more} color={Platform.OS === "ios" ? undefined : t.colors.primary} />
+            ) : null
+          }
           ListEmptyComponent={
             <EmptyView
+              icon={{ ios: "person.2", android: "group" }}
               title={debounced ? "No one matches that search" : "No students here"}
               message={status === "current" && !debounced ? "Add your first student to get started." : undefined}
             />
           }
         />
       )}
-    </SafeAreaView>
+
+      <PrimaryAction label="Add student" icon={icons.add} onPress={() => router.push("/students/new")} />
+    </View>
   );
 }
 
-const styles = StyleSheet.create({
-  fill: { flex: 1, backgroundColor: colors.background },
-  header: { paddingHorizontal: spacing.lg, paddingTop: spacing.lg, gap: spacing.md },
-  titleRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
-  addButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.xs,
-    backgroundColor: colors.primary,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderRadius: 999,
+const useStyles = makeStyles((t) => ({
+  page: { flex: 1, backgroundColor: t.colors.background },
+  header: {
+    gap: spacing.sm,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.md,
+    paddingHorizontal: Platform.OS === "ios" ? 0 : spacing.lg,
   },
-  list: { padding: spacing.lg },
-});
+  count: { paddingHorizontal: Platform.OS === "ios" ? spacing.lg : 0 },
+  more: { marginVertical: spacing.lg },
+}));

@@ -41,7 +41,7 @@ function ProfileForm({ initial }: { initial: Values }) {
   );
 
   return (
-    <Screen form edges={["bottom", "left", "right"]} footer={<Button title="Save" onPress={onSubmit} loading={update.isPending} />}>
+    <Screen form footer={<Button title="Save" onPress={onSubmit} loading={update.isPending} />}>
       <FormTextField control={form.control} name="name" label="Name" autoCapitalize="words" />
       <FormTextField control={form.control} name="phone" label="Mobile number" keyboardType="phone-pad" />
       <FormTextField control={form.control} name="email" label="Email" keyboardType="email-address" autoCapitalize="none" />

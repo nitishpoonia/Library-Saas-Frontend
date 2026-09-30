@@ -44,7 +44,7 @@ src/
     (auth)/            sign-in, sign-up: only reachable when signed out
     (app)/             everything after sign-in
       setup.tsx        first branch, when the account has none
-      (tabs)/          bottom tabs
+      (tabs)/          native tab bar; each tab is a folder with its own stack
   api/                 HTTP client, errors, query keys, response types
   session/             tokens, sign-in state, the current branch
   features/<feature>/  api.ts (requests), queries.ts (React Query hooks), forms and pieces
@@ -56,5 +56,5 @@ Rules that keep it consistent:
 
 - **Screens never call `fetch`.** They use hooks from `features/*/queries.ts`, which use `api/client.ts`.
 - **Every branch query key starts with `["library", id]`** (`api/keys.ts`), so switching branch never shows another branch's data.
-- **Every colour, font and spacing comes from `ui/theme.ts`.**
+- **Every colour, font and spacing comes from `ui/theme.ts`.** The app follows each platform's own design: iOS uses Apple's system colors, San Francisco and Liquid Glass (iOS 26); Android uses Material 3 with Material You colors. Screens read colors through `useTheme()` or `makeStyles()` (never at module level), so dark mode works everywhere. Icons go through `ui/Icon.tsx` (SF Symbols on iOS, Material Symbols on Android).
 - **Tokens:** the access token lives only in memory, the refresh token in the phone's secure storage. On a 401 the client refreshes once (shared by all requests waiting) and retries; if the refresh token is rejected, the app signs out and clears cached data.

@@ -9,7 +9,7 @@ import { applyServerErrors } from "@/features/auth/useServerErrors";
 import { useStaffMutations } from "@/features/staff/queries";
 import { cleanPhone, name, phone } from "@/features/students/schemas";
 import { useLibrary } from "@/session/CurrentLibrary";
-import { Button, Chips, ErrorBanner, FormTextField, Screen, Text, spacing } from "@/ui";
+import { Button, Chips, ErrorBanner, FieldLabel, FormTextField, Screen, Text, spacing } from "@/ui";
 
 const schema = z.object({ name, phone, password, role: z.enum(["STAFF", "MANAGER"]) });
 type Values = z.infer<typeof schema>;
@@ -30,7 +30,7 @@ export default function NewStaffScreen() {
   );
 
   return (
-    <Screen form edges={["bottom", "left", "right"]} footer={<Button title="Add login" onPress={onSubmit} loading={add.isPending} />}>
+    <Screen form footer={<Button title="Add login" onPress={onSubmit} loading={add.isPending} />}>
       <FormTextField control={form.control} name="name" label="Name" autoCapitalize="words" />
       <FormTextField control={form.control} name="phone" label="Mobile number" keyboardType="phone-pad" hint="They sign in with this number" />
       <FormTextField control={form.control} name="password" label="Password for them" hint="At least 8 characters. They can change it later." secureTextEntry />
@@ -39,7 +39,7 @@ export default function NewStaffScreen() {
         name="role"
         render={({ field }) => (
           <View style={{ gap: spacing.sm }}>
-            <Text variant="label">Role</Text>
+            <FieldLabel>Role</FieldLabel>
             <Chips
               options={[
                 { value: "STAFF", label: "Staff" },

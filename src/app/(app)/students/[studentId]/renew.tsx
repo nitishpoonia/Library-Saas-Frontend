@@ -1,8 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { router, useLocalSearchParams } from "expo-router";
+import { Stack, router, useLocalSearchParams } from "expo-router";
 import { useEffect } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
-import { Switch, View } from "react-native";
 import type { Membership, StudentDetail } from "@/api/types";
 import { isApiError } from "@/api/errors";
 import { SeatPicker } from "@/features/seats/SeatPicker";
@@ -12,7 +11,7 @@ import { useRenewMembership, useStudent } from "@/features/students/queries";
 import { renewalSchema, type RenewalValues } from "@/features/students/schemas";
 import { formatDate, todayLocal } from "@/lib/format";
 import { useLibrary } from "@/session/CurrentLibrary";
-import { Button, Card, ErrorBanner, ErrorView, LoadingView, Screen, Section, Text, colors, spacing } from "@/ui";
+import { Button, Card, ErrorBanner, ErrorView, ListSection, ListSwitchRow, LoadingView, Screen, Section, Text, useTheme } from "@/ui";
 
 /** The day after a date: renewals continue straight after the current period. */
 function nextDay(iso: string) {
@@ -34,6 +33,7 @@ export default function RenewScreen() {
 function RenewForm({ student }: { student: StudentDetail }) {
   const library = useLibrary();
   const renew = useRenewMembership(library.id, student.id);
+  const t = useTheme();
 
   // The period being continued, if the student still holds a seat.
   const live: Membership | undefined = student.memberships.find((m) => m.status === "ACTIVE" || m.status === "OVERDUE");
@@ -99,8 +99,8 @@ function RenewForm({ student }: { student: StudentDetail }) {
   });
 
   return (
-    <Screen form edges={["bottom", "left", "right"]} footer={<Button title="Renew" onPress={onSubmit} loading={renew.isPending} />}>
-      <Text variant="title">{student.name}</Text>
+    <Screen form footer={<Button title="Renew" onPress={onSubmit} loading={renew.isPending} />}>
+      <Stack.Screen options={{ title: `Renew ${student.name}` }} />
       {live ? (
         <Card>
           <Text variant="body">
@@ -113,7 +113,7 @@ function RenewForm({ student }: { student: StudentDetail }) {
       <Section title="New period">
         <PeriodFields control={form.control} showTimes={changeSeat} />
         {continuesFrom && startDate < continuesFrom ? (
-          <Text variant="caption" color={colors.danger}>
+          <Text variant="label" color={t.colors.danger}>
             Can't start before {formatDate(continuesFrom)}, when the current period ends.
           </Text>
         ) : null}
@@ -124,10 +124,9 @@ function RenewForm({ student }: { student: StudentDetail }) {
           control={form.control}
           name="changeSeat"
           render={({ field }) => (
-            <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.md }}>
-              <Switch value={field.value} onValueChange={field.onChange} />
-              <Text variant="bodyStrong">Change seat or time</Text>
-            </View>
+            <ListSection>
+              <ListSwitchRow title="Change seat or time" value={field.value} onValueChange={field.onChange} />
+            </ListSection>
           )}
         />
       ) : null}
@@ -144,7 +143,7 @@ function RenewForm({ student }: { student: StudentDetail }) {
             <Text variant="caption">Checking free seats…</Text>
           )}
           {form.formState.errors.seatId ? (
-            <Text variant="caption" color={colors.danger}>
+            <Text variant="label" color={t.colors.danger}>
               {form.formState.errors.seatId.message}
             </Text>
           ) : null}

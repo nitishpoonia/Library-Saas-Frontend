@@ -1,12 +1,13 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { router, useLocalSearchParams } from "expo-router";
 import { Controller, useForm } from "react-hook-form";
+import { View } from "react-native";
 import { z } from "zod";
 import { PAYMENT_MODES } from "@/features/payments/paymentModes";
 import { useRecordPayment } from "@/features/payments/queries";
 import { formatRupees } from "@/lib/format";
 import { useLibrary } from "@/session/CurrentLibrary";
-import { Button, Card, Chips, ErrorBanner, FormTextField, Screen, Text, colors } from "@/ui";
+import { Button, Card, Chips, ErrorBanner, FieldLabel, FormTextField, Screen, Text, spacing, useTheme } from "@/ui";
 
 /** Collect fees against one membership period. */
 export default function PayScreen() {
@@ -14,6 +15,7 @@ export default function PayScreen() {
   const params = useLocalSearchParams<{ membershipId: string; pending: string; name?: string }>();
   const pending = Number(params.pending ?? 0);
   const record = useRecordPayment(library.id, Number(params.membershipId));
+  const t = useTheme();
 
   const schema = z.object({
     amount: z
@@ -42,10 +44,10 @@ export default function PayScreen() {
   );
 
   return (
-    <Screen form edges={["bottom", "left", "right"]} footer={<Button title="Record payment" onPress={onSubmit} loading={record.isPending} />}>
+    <Screen form footer={<Button title="Record payment" onPress={onSubmit} loading={record.isPending} />}>
       <Card>
         <Text variant="label">{params.name ?? "Pending"}</Text>
-        <Text variant="value" color={colors.warning}>
+        <Text variant="value" color={t.colors.warning}>
           {formatRupees(pending)} pending
         </Text>
       </Card>
@@ -54,10 +56,10 @@ export default function PayScreen() {
         control={form.control}
         name="mode"
         render={({ field }) => (
-          <>
-            <Text variant="label">Paid by</Text>
+          <View style={{ gap: spacing.md }}>
+            <FieldLabel>Paid by</FieldLabel>
             <Chips options={PAYMENT_MODES} value={field.value} onChange={field.onChange} />
-          </>
+          </View>
         )}
       />
       <FormTextField control={form.control} name="notes" label="Note (optional)" placeholder="e.g. UPI ref 4521" />
