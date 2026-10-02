@@ -1,11 +1,12 @@
 import { useInfiniteQuery, useMutation } from "@tanstack/react-query";
-import { keys } from "@/api/keys";
+import { keepWithinBranch, keys } from "@/api/keys";
 import { useRefreshBranch } from "../students/queries";
 import { expensesApi, type ExpenseInput } from "./api";
 
 export function useExpenses(libraryId: number, month: string) {
   return useInfiniteQuery({
     queryKey: keys.expenses(libraryId, month),
+    placeholderData: keepWithinBranch(libraryId),
     queryFn: ({ pageParam }) => expensesApi.list(libraryId, { month, page: pageParam }),
     initialPageParam: 1,
     getNextPageParam: (last) => (last.meta.hasNextPage ? last.meta.page + 1 : undefined),

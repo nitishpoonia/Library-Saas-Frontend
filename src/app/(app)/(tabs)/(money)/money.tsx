@@ -1,17 +1,17 @@
 import { FlashList } from "@shopify/flash-list";
 import { router } from "expo-router";
 import { useState } from "react";
-import { Platform, Pressable, View } from "react-native";
+import { ActivityIndicator, Platform, Pressable, View } from "react-native";
+import { errorMessage } from "@/api/errors";
 import { useExpenses } from "@/features/expenses/queries";
 import { formatDate, formatMonth, formatRupees, todayLocal } from "@/lib/format";
 import { useLibrary } from "@/session/CurrentLibrary";
 import {
+  Button,
   Card,
   EmptyView,
-  ErrorView,
   Icon,
   ListCell,
-  LoadingView,
   PrimaryAction,
   Text,
   icons,
@@ -31,11 +31,14 @@ function shiftMonth(month: string, by: number) {
 /** Expenses by month (owner and manager only). */
 export default function MoneyScreen() {
   const library = useLibrary();
+  const t = useTheme();
   const styles = useStyles();
   const thisMonth = todayLocal().slice(0, 7);
   const [month, setMonth] = useState(thisMonth);
   const expenses = useExpenses(library.id, month);
   const items = expenses.data?.pages.flatMap((p) => p.items) ?? [];
+  // While another month loads, the previous one stays on screen and the arrows stay put.
+  const switching = expenses.isPlaceholderData;
   const total = expenses.data?.pages[0]?.meta.totalAmount ?? 0;
 
   const header = (
@@ -54,61 +57,72 @@ export default function MoneyScreen() {
       </View>
       <Card>
         <Text variant="label">Spent this month</Text>
-        <Text variant="value">{formatRupees(total)}</Text>
+        <View style={styles.totalRow}>
+          <Text variant="value">{switching || expenses.isLoading ? "—" : formatRupees(total)}</Text>
+          {switching ? <ActivityIndicator size="small" color={Platform.OS === "ios" ? undefined : t.colors.primary} /> : null}
+        </View>
       </Card>
     </View>
   );
 
+  // Loading and errors render inside the list, under the month header, so you can
+  // always step to another month.
+  const empty = expenses.isLoading ? (
+    <ActivityIndicator style={styles.loading} size="large" color={Platform.OS === "ios" ? undefined : t.colors.primary} />
+  ) : expenses.error ? (
+    <EmptyView
+      icon={icons.warning}
+      title={errorMessage(expenses.error)}
+      action={<Button title="Try again" variant="secondary" onPress={() => expenses.refetch()} />}
+    />
+  ) : (
+    <EmptyView icon={icons.receipt} title="No expenses this month" />
+  );
+
   return (
     <View style={styles.page}>
-      {expenses.isLoading ? (
-        <LoadingView />
-      ) : expenses.error && !items.length ? (
-        <ErrorView error={expenses.error} onRetry={() => expenses.refetch()} />
-      ) : (
-        <FlashList
-          data={items}
-          keyExtractor={(e) => String(e.id)}
-          contentInsetAdjustmentBehavior="automatic"
-          contentContainerStyle={listContentStyle}
-          ListHeaderComponent={header}
-          onEndReached={() => {
-            if (expenses.hasNextPage && !expenses.isFetchingNextPage) void expenses.fetchNextPage();
-          }}
-          refreshing={expenses.isRefetching}
-          onRefresh={() => expenses.refetch()}
-          ListEmptyComponent={<EmptyView icon={icons.receipt} title="No expenses this month" />}
-          renderItem={({ item, index }) => (
-            <ListCell
-              first={index === 0}
-              last={index === items.length - 1}
-              onPress={() =>
-                router.push({
-                  pathname: "/expenses/[expenseId]",
-                  params: {
-                    expenseId: String(item.id),
-                    title: item.title,
-                    category: item.category,
-                    amount: String(item.amount),
-                    spentOn: item.spentOn,
-                    notes: item.notes ?? "",
-                  },
-                })
-              }
-            >
-              <View style={styles.flex}>
-                <Text variant="body" numberOfLines={1}>
-                  {item.title}
-                </Text>
-                <Text variant="caption" numberOfLines={1}>
-                  {item.category} · {formatDate(item.spentOn, false)}
-                </Text>
-              </View>
-              <Text variant="bodyStrong">{formatRupees(item.amount)}</Text>
-            </ListCell>
-          )}
-        />
-      )}
+      <FlashList
+        data={items}
+        keyExtractor={(e) => String(e.id)}
+        contentInsetAdjustmentBehavior="automatic"
+        contentContainerStyle={listContentStyle}
+        ListHeaderComponent={header}
+        onEndReached={() => {
+          if (expenses.hasNextPage && !expenses.isFetchingNextPage && !switching) void expenses.fetchNextPage();
+        }}
+        refreshing={expenses.isRefetching && !switching}
+        onRefresh={() => expenses.refetch()}
+        ListEmptyComponent={empty}
+        renderItem={({ item, index }) => (
+          <ListCell
+            first={index === 0}
+            last={index === items.length - 1}
+            onPress={() =>
+              router.push({
+                pathname: "/expenses/[expenseId]",
+                params: {
+                  expenseId: String(item.id),
+                  title: item.title,
+                  category: item.category,
+                  amount: String(item.amount),
+                  spentOn: item.spentOn,
+                  notes: item.notes ?? "",
+                },
+              })
+            }
+          >
+            <View style={styles.flex}>
+              <Text variant="body" numberOfLines={1}>
+                {item.title}
+              </Text>
+              <Text variant="caption" numberOfLines={1}>
+                {item.category} · {formatDate(item.spentOn, false)}
+              </Text>
+            </View>
+            <Text variant="bodyStrong">{formatRupees(item.amount)}</Text>
+          </ListCell>
+        )}
+      />
 
       <PrimaryAction label="Add expense" icon={icons.add} onPress={() => router.push("/expenses/new")} />
     </View>
@@ -153,4 +167,6 @@ const useStyles = makeStyles((t) => ({
   },
   pressed: { opacity: 0.6 },
   flex: { flex: 1, gap: 2 },
+  totalRow: { flexDirection: "row", alignItems: "center", gap: spacing.sm },
+  loading: { marginTop: spacing.xxl * 2 },
 }));
