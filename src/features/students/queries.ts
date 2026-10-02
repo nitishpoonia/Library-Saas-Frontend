@@ -9,7 +9,12 @@ import { studentsApi, type NewStudentInput, type RenewalInput, type StudentStatu
  */
 export function useRefreshBranch(libraryId: number) {
   const queryClient = useQueryClient();
-  return () => queryClient.invalidateQueries({ queryKey: keys.library(libraryId) });
+  // Not returned on purpose: a mutation's onSuccess that returns a promise is awaited
+  // before the screen's own callbacks run, so the button would keep spinning until every
+  // open list and the dashboard had refetched. The refetch still happens, in the background.
+  return () => {
+    void queryClient.invalidateQueries({ queryKey: keys.library(libraryId) });
+  };
 }
 
 export function useStudents(libraryId: number, status: StudentStatusFilter, search: string) {

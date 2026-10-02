@@ -13,6 +13,8 @@ import { Chips, EmptyView, ErrorView, LoadingView, Text, TextField, colors, spac
 
 const FILTERS: Array<{ value: StudentStatusFilter; label: string }> = [
   { value: "current", label: "Current" },
+  // Started and not overdue; Home's "Active students" card opens this.
+  { value: "active", label: "Active" },
   { value: "overdue", label: "Overdue" },
   { value: "pending", label: "Fees pending" },
   { value: "expiring", label: "Ending soon" },
@@ -22,12 +24,14 @@ const FILTERS: Array<{ value: StudentStatusFilter; label: string }> = [
 
 export default function StudentsScreen() {
   const library = useLibrary();
-  const params = useLocalSearchParams<{ status?: StudentStatusFilter }>();
+  const params = useLocalSearchParams<{ status?: StudentStatusFilter; at?: string }>();
   const [status, setStatus] = useState<StudentStatusFilter>(params.status ?? "current");
   // Home's cards open this tab with a filter, even when the tab is already open.
+  // `at` changes on every tap, so tapping the same card again re-applies its filter
+  // after the user picked another chip.
   useEffect(() => {
     if (params.status) setStatus(params.status);
-  }, [params.status]);
+  }, [params.status, params.at]);
   const [search, setSearch] = useState("");
   const debounced = useDebounced(search.trim());
 
