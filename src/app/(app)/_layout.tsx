@@ -20,7 +20,9 @@ function AppStack() {
   const { library, isLoading } = useCurrentLibrary();
 
   if (isLoading) return <LoadingView />;
-  if (me.error) return <ErrorView error={me.error} onRetry={() => me.refetch()} />;
+  // Only when there's nothing to show. A failed background refetch keeps the cached
+  // data, and swapping the whole navigator out for it would lose the user's place.
+  if (me.error && !me.data) return <ErrorView error={me.error} onRetry={() => me.refetch()} />;
 
   const hasBranch = library !== null;
 
