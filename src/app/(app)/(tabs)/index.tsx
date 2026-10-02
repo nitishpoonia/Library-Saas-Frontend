@@ -70,7 +70,7 @@ export default function HomeScreen() {
 }
 
 function openStudents(status: StudentStatusFilter) {
-  router.navigate({ pathname: "/students", params: { status } });
+  router.navigate({ pathname: "/students", params: { status, at: String(Date.now()) } });
 }
 
 const styles = StyleSheet.create({
