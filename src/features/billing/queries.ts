@@ -4,21 +4,26 @@ import { brandColor } from "@/ui";
 import { billingApi, type OrderRequest } from "./api";
 import { checkout, type Prefill } from "./checkout";
 
-export { CheckoutCancelled } from "./checkout";
+export { CheckoutCancelled, CheckoutFailed, PaymentNotConfirmed } from "./checkout";
 
-export function useBilling() {
-  return useQuery({ queryKey: keys.billing, queryFn: billingApi.summary });
+/** @param pollMs Refetch on this interval, e.g. while waiting for a payment to be confirmed. */
+export function useBilling(pollMs?: number) {
+  return useQuery({ queryKey: keys.billing, queryFn: billingApi.summary, refetchInterval: pollMs ?? false });
 }
 
 export function useCheckout(prefill: Prefill) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (request: OrderRequest) => checkout(request, prefill, brandColor),
-    onSuccess: async (summary) => {
+    onSuccess: (summary) => {
       queryClient.setQueryData(keys.billing, summary);
-      // Subscription state shows on every branch's dashboard.
-      await queryClient.invalidateQueries({ queryKey: ["library"] });
-      await queryClient.invalidateQueries({ queryKey: keys.me });
+      refreshAfterPayment(queryClient);
     },
   });
+}
+
+/** Subscription state shows on every branch's dashboard and in /me. */
+export function refreshAfterPayment(queryClient: ReturnType<typeof useQueryClient>) {
+  void queryClient.invalidateQueries({ queryKey: ["library"] });
+  void queryClient.invalidateQueries({ queryKey: keys.me });
 }

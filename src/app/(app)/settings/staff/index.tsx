@@ -53,7 +53,17 @@ function StaffRow({ member }: { member: StaffMember }) {
       <Text variant="caption" style={styles.contact}>
         {member.user.phone ? formatPhone(member.user.phone) : member.user.email}
       </Text>
-      <Chips options={ROLES} value={member.role} onChange={(role) => role !== member.role && changeRole.mutate({ staffId: member.id, role })} />
+      <Chips
+        options={ROLES}
+        value={member.role}
+        onChange={(role) =>
+          role !== member.role &&
+          changeRole.mutate(
+            { staffId: member.id, role },
+            { onError: (e) => Alert.alert("Couldn't change the role", errorMessage(e)) },
+          )
+        }
+      />
       <ListSection>
         <ListRow title="Remove access" icon={icons.trash} destructive onPress={confirmRemove} />
       </ListSection>

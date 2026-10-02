@@ -47,6 +47,17 @@ export async function registerDevice(): Promise<string | null> {
   return registeredToken;
 }
 
+/**
+ * Detaches this phone from the account on the server, while the session still works.
+ * Best effort: a failure here shouldn't block signing out.
+ */
+export async function unregisterDevice() {
+  const token = registeredToken;
+  if (!token) return;
+  await api.delete(`/me/devices/${encodeURIComponent(token)}`);
+  registeredToken = null;
+}
+
 export async function sendToken(token: string) {
   await api.post("/me/devices", { token, platform: "ANDROID" });
   registeredToken = token;

@@ -2,10 +2,11 @@ import * as Application from "expo-application";
 import { router } from "expo-router";
 import { Alert, View } from "react-native";
 import { request } from "@/api/client";
+import { errorMessage } from "@/api/errors";
 import type { Role } from "@/api/types";
-import { useUpdateProfile } from "@/features/account/mutations";
+import { useSetNotifications } from "@/features/account/mutations";
 import { useMe } from "@/features/account/queries";
-import { getRegisteredToken } from "@/features/notifications/push";
+import { getRegisteredToken, unregisterDevice } from "@/features/notifications/push";
 import { formatPhone } from "@/lib/format";
 import { useCanManage, useCurrentLibrary } from "@/session/CurrentLibrary";
 import { useSession } from "@/session/SessionProvider";
@@ -22,7 +23,7 @@ export default function MenuScreen() {
   const { library, libraries, select } = useCurrentLibrary();
   const { signOut } = useSession();
   const canManage = useCanManage();
-  const updateProfile = useUpdateProfile();
+  const setNotifications = useSetNotifications();
   const isOwner = !!me.data?.organization;
   const user = me.data?.user;
 
@@ -40,6 +41,9 @@ export default function MenuScreen() {
         text: "Sign out everywhere",
         style: "destructive",
         onPress: async () => {
+          // logout-all ends this session too, so the push token has to go first:
+          // afterwards there's no valid session left to remove it with.
+          await unregisterDevice().catch(() => {});
           await request("POST", "/auth/logout-all").catch(() => {});
           await signOut();
         },
@@ -99,7 +103,11 @@ export default function MenuScreen() {
           icon={icons.bell}
           iconColor={tile.red}
           value={user?.notificationsEnabled ?? true}
-          onValueChange={(on) => updateProfile.mutate({ notificationsEnabled: on })}
+          onValueChange={(on) =>
+            setNotifications.mutate(on, {
+              onError: (e) => Alert.alert("Couldn't change notifications", errorMessage(e)),
+            })
+          }
         />
       </ListSection>
 
