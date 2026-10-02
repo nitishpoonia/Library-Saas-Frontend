@@ -3,8 +3,9 @@ import * as Application from "expo-application";
 import { router } from "expo-router";
 import { Alert, Pressable, StyleSheet, Switch, View } from "react-native";
 import { request } from "@/api/client";
-import { useUpdateProfile } from "@/features/account/mutations";
-import { getRegisteredToken } from "@/features/notifications/push";
+import { errorMessage } from "@/api/errors";
+import { useSetNotifications } from "@/features/account/mutations";
+import { getRegisteredToken, unregisterDevice } from "@/features/notifications/push";
 import type { Role } from "@/api/types";
 import { useMe } from "@/features/account/queries";
 import { formatPhone } from "@/lib/format";
@@ -19,7 +20,7 @@ export default function MenuScreen() {
   const { library, libraries, select } = useCurrentLibrary();
   const { signOut } = useSession();
   const canManage = useCanManage();
-  const updateProfile = useUpdateProfile();
+  const setNotifications = useSetNotifications();
   const isOwner = !!me.data?.organization;
 
   const confirmSignOut = () =>
@@ -36,6 +37,9 @@ export default function MenuScreen() {
         text: "Sign out everywhere",
         style: "destructive",
         onPress: async () => {
+          // logout-all ends this session too, so the push token has to go first:
+          // afterwards there's no valid session left to remove it with.
+          await unregisterDevice().catch(() => {});
           await request("POST", "/auth/logout-all").catch(() => {});
           await signOut();
         },
@@ -94,7 +98,11 @@ export default function MenuScreen() {
           </Text>
           <Switch
             value={me.data?.user.notificationsEnabled ?? true}
-            onValueChange={(on) => updateProfile.mutate({ notificationsEnabled: on })}
+            onValueChange={(on) =>
+              setNotifications.mutate(on, {
+                onError: (e) => Alert.alert("Couldn't change notifications", errorMessage(e)),
+              })
+            }
           />
         </View>
       </View>

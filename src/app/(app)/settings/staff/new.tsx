@@ -3,7 +3,7 @@ import { router } from "expo-router";
 import { Controller, useForm } from "react-hook-form";
 import { View } from "react-native";
 import { z } from "zod";
-import { isApiError } from "@/api/errors";
+import { isApiError, UserFacingError } from "@/api/errors";
 import { password } from "@/features/auth/schemas";
 import { applyServerErrors } from "@/features/auth/useServerErrors";
 import { useStaffMutations } from "@/features/staff/queries";
@@ -55,7 +55,7 @@ export default function NewStaffScreen() {
         error={
           add.error && !Object.keys(form.formState.errors).length
             ? isApiError(add.error, "ALREADY_STAFF")
-              ? new Error("This person already has access to this branch.")
+              ? new UserFacingError("This person already has access to this branch.")
               : add.error
             : null
         }

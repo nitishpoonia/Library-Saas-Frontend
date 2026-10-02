@@ -1,4 +1,5 @@
-import { CheckoutCancelled, checkout } from "../checkout";
+import { errorMessage } from "@/api/errors";
+import { CheckoutCancelled, CheckoutFailed, PaymentNotConfirmed, checkout, readRazorpayError } from "../checkout";
 
 jest.mock("@/lib/env", () => ({ API_URL: "https://api.test/v1" }));
 
@@ -45,5 +46,55 @@ describe("checkout", () => {
 
     await expect(checkout({ kind: "BRANCH_ADDON" }, {}, "#000")).rejects.toBeInstanceOf(CheckoutCancelled);
     expect(calls.map((c) => c.url)).toEqual(["https://api.test/v1/billing/orders"]);
+  });
+
+  it("reads a cancellation sent as a JSON description", async () => {
+    mockServer();
+    mockOpen.mockRejectedValue({
+      code: 2,
+      description: JSON.stringify({ error: { description: "Payment processing cancelled by user", reason: "payment_cancelled" } }),
+    });
+
+    await expect(checkout({ kind: "BRANCH_ADDON" }, {}, "#000")).rejects.toBeInstanceOf(CheckoutCancelled);
+  });
+
+  it("shows a real failure instead of hiding it as a cancellation", async () => {
+    const calls = mockServer();
+    mockOpen.mockRejectedValue({
+      code: 1,
+      description: JSON.stringify({ error: { description: "Your payment has been declined by the bank", reason: "payment_failed" } }),
+    });
+
+    const error = await checkout({ kind: "PLAN", plan: "MONTHLY" }, {}, "#000").catch((e) => e);
+    expect(error).toBeInstanceOf(CheckoutFailed);
+    expect(errorMessage(error)).toBe("Your payment has been declined by the bank");
+    expect(calls.map((c) => c.url)).toEqual(["https://api.test/v1/billing/orders"]);
+  });
+
+  it("never reports a taken payment as failed when verify fails", async () => {
+    globalThis.fetch = jest.fn(async (url: string) =>
+      url.endsWith("/billing/orders")
+        ? new Response(JSON.stringify({ data: { subscriptionPaymentId: 7, orderId: "order_7", amountPaise: 99900, currency: "INR", keyId: "rzp_test" } }), { status: 201 })
+        : new Response(JSON.stringify({ error: { code: "INTERNAL", message: "boom" } }), { status: 502 }),
+    ) as unknown as typeof fetch;
+    mockOpen.mockResolvedValue({ razorpay_order_id: "order_7", razorpay_payment_id: "pay_7", razorpay_signature: "sig" });
+
+    const error = await checkout({ kind: "PLAN", plan: "MONTHLY" }, {}, "#000").catch((e) => e);
+    expect(error).toBeInstanceOf(PaymentNotConfirmed);
+    expect(error.subscriptionPaymentId).toBe(7);
+  });
+});
+
+describe("readRazorpayError", () => {
+  it("handles plain text and missing descriptions", () => {
+    expect(readRazorpayError({ code: 0, description: "Payment cancelled by user" })).toEqual({
+      cancelled: true,
+      message: "Payment cancelled by user",
+    });
+    expect(readRazorpayError({ code: 100 })).toEqual({
+      cancelled: false,
+      message: "The payment didn't go through. You can try again.",
+    });
+    expect(readRazorpayError(null).cancelled).toBe(false);
   });
 });

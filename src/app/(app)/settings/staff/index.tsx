@@ -52,7 +52,14 @@ function StaffRow({ member }: { member: StaffMember }) {
         <Text variant="bodyStrong">{member.user.name}</Text>
         <Text variant="caption">{member.user.phone ? formatPhone(member.user.phone) : member.user.email}</Text>
       </View>
-      <Chips options={ROLES} value={member.role} onChange={(role) => role !== member.role && changeRole.mutate({ staffId: member.id, role })} />
+      <Chips options={ROLES} value={member.role} onChange={(role) =>
+          role !== member.role &&
+          changeRole.mutate(
+            { staffId: member.id, role },
+            { onError: (e) => Alert.alert("Couldn't change the role", errorMessage(e)) },
+          )
+        }
+      />
       <Button title="Remove access" variant="ghost" onPress={confirmRemove} style={styles.remove} />
     </Card>
   );
