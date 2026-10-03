@@ -97,10 +97,11 @@ Line numbers refer to commit `main` as of 29 Sep 2026. Backend findings, the sys
   Fix direction: one API layer that always throws a normalized error (status, code, message), and error states on screens.
   **Status:** fixed in the Expo app (`feat/expo-app`): one client, every failure becomes an ApiError with code; screens show error states with retry.
 
-- [ ] **FD2 · P1 · Lists don't update after changes.**
+- [x] **FD2 · P1 · Lists don't update after changes.**
   Where: `features/students/studentQueries/studentQueries.tsx:18–27` (`useAddStudent` refreshes only the dashboard, not the student list, which is cached for 30 minutes at `:39`), `useDeleteStudent` refreshes nothing. Cache refreshes are also scattered across screens (`AddStudents.tsx:231`, `AddExpense.tsx:107`), and `ViewAllExpenses.tsx:72–79` deletes the cache on every focus, which defeats caching.
   Problem: an owner adds a student and doesn't see them in the list.
   Fix direction: one query-key factory per feature, and every mutation hook refreshes all the keys it affects. Screens never touch the cache directly.
+  **Status:** fixed in the Expo app (`feat/expo-students`): every write refreshes everything cached for the branch, from one hook (`useRefreshBranch`).
 
 - [x] **FD3 · P2 · Query key without the library id.**
   Where: `features/settings/settingsQueries/settingsQueries.tsx:32` (`['libraryDetails']`).
@@ -117,6 +118,7 @@ Line numbers refer to commit `main` as of 29 Sep 2026. Backend findings, the sys
   Where: 33 uses of `any`, mutation payloads typed `any`, and the student type in `service/studentService.ts:3–12` has `libarary_id` and `amount`, while the backend expects `library_id`, `total_fee` and `amount_paid`.
   Problem: TypeScript can't catch a wrong field name, which is exactly the kind of bug that reaches users.
   Fix direction: define request and response types once per endpoint. Once the backend has validation schemas (C2), share or generate the types from them.
+  **Status:** mostly fixed: request and response types in `api/types.ts` match the backend and were checked against it end to end. Sharing them from the backend is still open.
 
 - [x] **FD6 · P2 · Environment is switched by editing code.**
   Where: `constants/api/config.ts:6` (`IS_DEV = false`).
@@ -141,36 +143,42 @@ Line numbers refer to commit `main` as of 29 Sep 2026. Backend findings, the sys
 
 ## 5. Screens and forms
 
-- [ ] **FU1 · P2 · The Add Student form is built differently from every other form.**
+- [x] **FU1 · P2 · The Add Student form is built differently from every other form.**
   Where: `features/students/screens/AddStudents.tsx` (854 lines, 17 `useState` hooks, hand-written validation).
   Problem: 9 other forms use `react-hook-form` with `yup`. This one, the most important form in the app, doesn't, so its validation and error display behave differently.
   Fix direction: move it to the same form approach, and split it into a form hook plus smaller components (student details, seat and time picker, payment).
+  **Status:** fixed in the Expo app (`feat/expo-students`): every form uses react-hook-form + zod; add-student reuses the period and fee sections with renewal.
 
-- [ ] **FU2 · P2 · Very large components.**
+- [x] **FU2 · P2 · Very large components.**
   `ReceiptModal.tsx` 688 lines, `ListOfStudents.tsx` 608, `RenewMembershipModal.tsx` 584. Data fetching, formatting and UI are mixed in each. Split data hooks from presentational components.
+  **Status:** fixed in the Expo app (`feat/expo-students`): screens are split into feature pieces (StudentCard, SeatPicker, PeriodFields, FeeFields).
 
 - [x] **FU3 · P2 · No design system.**
   Problem: 286 hardcoded hex colors across screens and components. `constants/theme.ts` is a leftover from the Expo template and isn't used. Changing the brand color or adding dark mode means editing dozens of files.
   Fix direction: shared tokens for colors, spacing and typography, plus a few base components (button, input, card, screen) that all screens use.
   **Status:** fixed in the Expo app (`feat/expo-app`): `ui/theme.ts` tokens (same colours and Montserrat) and shared components.
 
-- [ ] **FU4 · P2 · Duplicated helpers.**
+- [x] **FU4 · P2 · Duplicated helpers.**
   `formatCurrency` is defined in 3 places (`Dashbaord.tsx:50`, `RenewMembershipModal.tsx:157`, `receiptHelpers.ts:14`) next to `utils/FormatAmount.ts`. `useDebounce` is defined inside `AddStudents.tsx:38`. Move each to one shared file.
+  **Status:** fixed: one `formatRupees`/`formatDate` in `lib/format.ts`, one `useDebounced`.
 
 - [x] **FU5 · P2 · Subscription status shown wrong.**
   Where: `Dashbaord.tsx:99`.
   Problem: anything that isn't `trial` is shown as "Active", including an expired subscription.
   **Status:** fixed in the Expo app (`feat/expo-app`): the badge says trial, plan or ended.
 
-- [ ] **FU6 · P1 · The paused / overdue flow has no UI yet.**
+- [x] **FU6 · P1 · The paused / overdue flow has no UI yet.**
   The confirmed rule needs: a paused badge with days left before cancellation, a filter for paused students, and a way to collect payment that re-activates the membership **(needs backend A2, A3)**.
+  **Status:** fixed in the Expo app (`feat/expo-students`): overdue badge with days the seat is still held, overdue and fees-pending filters, both flags with the amount on each card.
 
-- [ ] **FU7 · P3 · Receipt PDF breaks on special characters.**
+- [x] **FU7 · P3 · Receipt PDF breaks on special characters.**
   Where: `features/students/studentHelpers/receiptHelpers.ts` (`generateReceiptHTML`).
   Problem: student and library names are inserted into HTML as-is, so a name containing `<` or `&` breaks the layout. Escape values before inserting them.
+  **Status:** fixed in the Expo app (`feat/expo-students`): receipt values are HTML-escaped (tested).
 
-- [ ] **FU8 · P3 · Receipts exist only on the device that made them.**
+- [x] **FU8 · P3 · Receipts exist only on the device that made them.**
   A receipt is generated as a PDF on the phone at payment time. If the owner needs to re-send it later or from another phone, it has to be rebuilt from data that may have changed. A receipt endpoint on the server would give one source of truth.
+  **Status:** fixed in the Expo app (`feat/expo-students`): receipts load from the server and can be re-shared from any phone.
 
 ---
 

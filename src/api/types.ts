@@ -66,3 +66,81 @@ export type PageMeta = {
   totalPages: number;
   hasNextPage: boolean;
 };
+
+export type MembershipStatus = "ACTIVE" | "OVERDUE" | "COMPLETED" | "CANCELLED";
+export type PaymentMode = "CASH" | "UPI" | "CARD" | "BANK_TRANSFER";
+
+export type Membership = {
+  id: number;
+  seatId: number;
+  seatLabel?: string;
+  startDate: string;
+  endDate: string;
+  /** "22:00-02:00" */
+  timing: string;
+  startTime: string;
+  endTime: string;
+  status: MembershipStatus;
+  fee: number;
+  amountPaid: number;
+  pendingAmount: number;
+  paymentStatus: "PAID" | "PENDING";
+  daysRemaining: number;
+  /** While OVERDUE: last day the seat is held. */
+  graceEndsOn: string | null;
+  graceDaysLeft: number | null;
+  cancelReason: "NOT_RENEWED" | "REMOVED" | null;
+  renewsId: number | null;
+};
+
+export type Payment = {
+  id: number;
+  membershipId: number;
+  amount: number;
+  mode: PaymentMode;
+  paidAt: string;
+  receiptNumber: string;
+  notes: string | null;
+  voided: boolean;
+  voidedAt: string | null;
+  voidReason: string | null;
+};
+
+export type StudentFlag = "OVERDUE" | "FEES_PENDING";
+
+export type StudentListItem = {
+  id: number;
+  name: string;
+  phone: string;
+  archived: boolean;
+  current: Membership | null;
+  pendingAmount: number;
+  flags: StudentFlag[];
+};
+
+export type StudentDetail = {
+  id: number;
+  name: string;
+  phone: string;
+  archived: boolean;
+  createdAt: string;
+  pendingAmount: number;
+  current: Membership | null;
+  memberships: Array<Membership & { payments: Payment[] }>;
+};
+
+export type Receipt = Payment & {
+  libraryName: string;
+  libraryAddress: string;
+  studentName: string;
+  studentPhone: string;
+  seatLabel?: string;
+  timing: string;
+  periodStart: string;
+  periodEnd: string;
+  fee: number;
+  totalPaid: number;
+  pendingAmount: number;
+};
+
+export type SeatAvailability = { id: number; label: string; position: number; hasLocker: boolean; available: boolean };

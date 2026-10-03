@@ -22,6 +22,7 @@ export default function TabsLayout() {
       }}
     >
       <Tabs.Screen name="index" options={{ title: "Home", tabBarIcon: icon("home", "home-outline") }} />
+      <Tabs.Screen name="students" options={{ title: "Students", tabBarIcon: icon("people", "people-outline") }} />
       <Tabs.Screen name="menu" options={{ title: "Menu", tabBarIcon: icon("menu", "menu-outline") }} />
     </Tabs>
   );
