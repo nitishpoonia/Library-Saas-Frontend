@@ -1,3 +1,5 @@
+> **Admin panel:** the web app for running the service lives in [`apps/admin`](apps/admin/README.md). It installs and builds on its own; the React Native tooling here ignores `apps/`.
+
 This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
 
 # Getting Started
