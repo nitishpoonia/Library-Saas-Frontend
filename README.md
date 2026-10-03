@@ -1,5 +1,7 @@
 # Library SaaS — App
 
+> **Admin panel:** the web app for running the service lives in [`apps/admin`](apps/admin/README.md). It installs and builds on its own; the Expo app's TypeScript, Jest and Metro ignore `apps/`.
+
 Mobile app for library owners and their staff. Expo SDK 57, Expo Router, React Query, TypeScript. Talks to the backend's `/v1` API ([Libaray-Saas-Backend](https://github.com/nitishpoonia/Libaray-Saas-Backend)).
 
 ## Run it
