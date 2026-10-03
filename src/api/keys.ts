@@ -20,3 +20,13 @@ export const keys = {
   staff: (libraryId: number) => ["library", libraryId, "staff"] as const,
   billing: ["billing"] as const,
 };
+
+/**
+ * `placeholderData` for lists whose filter, search or month changes: keeps showing the
+ * previous results while the new ones load, instead of blanking the screen. Only within
+ * the same branch, so switching branch never flashes another branch's data.
+ */
+export function keepWithinBranch(libraryId: number) {
+  return <T>(previous: T | undefined, previousQuery?: { queryKey: readonly unknown[] }) =>
+    previousQuery?.queryKey[0] === "library" && previousQuery.queryKey[1] === libraryId ? previous : undefined;
+}

@@ -1,14 +1,16 @@
 import DateTimePicker, { DateTimePickerAndroid } from "@react-native-community/datetimepicker";
-import Ionicons from "@expo/vector-icons/Ionicons";
-import { useState } from "react";
-import { Platform, Pressable, StyleSheet, View } from "react-native";
+import { Platform, Pressable, View } from "react-native";
 import { formatDate } from "@/lib/format";
+import { Icon, icons } from "./Icon";
 import { Text } from "./Text";
-import { colors, radius, spacing } from "./theme";
+import { makeStyles, radius, spacing, useTheme } from "./theme";
 
 /**
  * Date and time inputs. The app passes plain strings ("2026-01-10", "22:30") like the
  * API does; conversion to and from JS Date happens only here.
+ *
+ * iOS: a row with Apple's compact date/time button, which opens the system calendar or
+ * wheel in a popover. Android: a field that opens the Material 3 date/time dialog.
  */
 
 const pad = (n: number) => String(n).padStart(2, "0");
@@ -38,57 +40,37 @@ export function formatTime12(value: string): string {
   return `${hour}:${pad(m ?? 0)} ${suffix}`;
 }
 
-function PickerField({
-  mode,
-  label,
-  value,
-  onChange,
-  error,
-}: {
+type FieldProps = {
   mode: "date" | "time";
   label: string;
   value: string;
   onChange: (value: string) => void;
   error?: string;
-}) {
-  const [iosOpen, setIosOpen] = useState(false);
-  const display = mode === "date" ? formatDate(value) : formatTime12(value);
+};
 
-  const open = () => {
-    if (Platform.OS === "android") {
-      DateTimePickerAndroid.open({
-        mode,
-        value: toDate(mode, value),
-        is24Hour: false,
-        onValueChange: (_event, date) => onChange(fromDate(mode, date)),
-      });
-    } else {
-      setIosOpen((o) => !o);
-    }
-  };
+function PickerField(props: FieldProps) {
+  return Platform.OS === "ios" ? <IOSPicker {...props} /> : <AndroidPicker {...props} />;
+}
 
+function IOSPicker({ mode, label, value, onChange, error }: FieldProps) {
+  const t = useTheme();
+  const styles = useStyles();
   return (
     <View style={styles.wrap}>
-      <Text variant="label">{label}</Text>
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={`${label}: ${display}`}
-        onPress={open}
-        style={[styles.field, error ? styles.fieldError : null]}
-      >
-        <Text variant="body">{display}</Text>
-        <Ionicons name={mode === "date" ? "calendar-outline" : "time-outline"} size={20} color={colors.textMuted} />
-      </Pressable>
-      {Platform.OS === "ios" && iosOpen ? (
+      <View style={[styles.iosRow, error ? styles.iosError : null]}>
+        <Text variant="body" style={styles.flex} numberOfLines={1}>
+          {label}
+        </Text>
         <DateTimePicker
           mode={mode}
-          display="spinner"
+          display="compact"
           value={toDate(mode, value)}
           onValueChange={(_event, date) => onChange(fromDate(mode, date))}
+          accessibilityLabel={label}
         />
-      ) : null}
+      </View>
       {error ? (
-        <Text variant="caption" color={colors.danger}>
+        <Text variant="label" color={t.colors.danger} style={styles.support}>
           {error}
         </Text>
       ) : null}
@@ -96,20 +78,79 @@ function PickerField({
   );
 }
 
-export const DateField = (props: Omit<Parameters<typeof PickerField>[0], "mode">) => <PickerField mode="date" {...props} />;
-export const TimeField = (props: Omit<Parameters<typeof PickerField>[0], "mode">) => <PickerField mode="time" {...props} />;
+function AndroidPicker({ mode, label, value, onChange, error }: FieldProps) {
+  const t = useTheme();
+  const styles = useStyles();
+  const display = mode === "date" ? formatDate(value) : formatTime12(value);
+  const accent = error ? t.colors.danger : t.colors.textMuted;
 
-const styles = StyleSheet.create({
+  const open = () =>
+    DateTimePickerAndroid.open({
+      mode,
+      design: "material",
+      title: label,
+      value: toDate(mode, value),
+      is24Hour: false,
+      onValueChange: (_event, date) => onChange(fromDate(mode, date)),
+    });
+
+  return (
+    <View style={styles.wrap}>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={`${label}: ${display}`}
+        onPress={open}
+        android_ripple={{ color: t.colors.ripple, foreground: true }}
+        style={[styles.androidField, { borderBottomColor: accent, borderBottomWidth: error ? 2 : 1 }]}
+      >
+        <View style={styles.flex}>
+          <Text variant="label" color={accent} numberOfLines={1}>
+            {label}
+          </Text>
+          <Text variant="body">{display}</Text>
+        </View>
+        <Icon name={mode === "date" ? icons.calendar : icons.time} size={22} color={t.colors.textMuted} />
+      </Pressable>
+      {error ? (
+        <Text variant="label" color={t.colors.danger} style={styles.support}>
+          {error}
+        </Text>
+      ) : null}
+    </View>
+  );
+}
+
+export const DateField = (props: Omit<FieldProps, "mode">) => <PickerField mode="date" {...props} />;
+export const TimeField = (props: Omit<FieldProps, "mode">) => <PickerField mode="time" {...props} />;
+
+const useStyles = makeStyles((t) => ({
   wrap: { gap: spacing.xs, flex: 1 },
-  field: {
+  flex: { flex: 1 },
+  support: { paddingHorizontal: spacing.lg },
+  iosRow: {
     minHeight: 48,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radius.md,
-    paddingHorizontal: spacing.md,
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
+    gap: spacing.sm,
+    paddingLeft: spacing.lg,
+    paddingRight: spacing.sm,
+    backgroundColor: t.colors.surface,
+    borderRadius: radius.md,
+    borderCurve: "continuous",
+    borderWidth: 1,
+    borderColor: "transparent",
   },
-  fieldError: { borderColor: colors.danger },
-});
+  iosError: { borderColor: t.colors.danger },
+  androidField: {
+    minHeight: 56,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.md,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+    backgroundColor: t.colors.fill,
+    borderTopLeftRadius: radius.md,
+    borderTopRightRadius: radius.md,
+    overflow: "hidden",
+  },
+}));

@@ -1,10 +1,24 @@
 import { useState } from "react";
-import { Alert, Pressable, StyleSheet, Switch, View } from "react-native";
+import { Alert, View } from "react-native";
 import { errorMessage } from "@/api/errors";
 import type { Seat } from "@/api/types";
 import { useSeatMutations, useSeats } from "@/features/seats/queries";
 import { useLibrary } from "@/session/CurrentLibrary";
-import { Button, Card, ErrorView, LoadingView, Screen, Section, Text, TextField, colors, spacing } from "@/ui";
+import {
+  Button,
+  ErrorView,
+  ListRow,
+  ListSection,
+  ListSwitchRow,
+  LoadingView,
+  Screen,
+  Section,
+  Text,
+  TextField,
+  icons,
+  makeStyles,
+  spacing,
+} from "@/ui";
 
 /** Add, rename and remove seats (owner and manager). */
 export default function SeatsScreen() {
@@ -14,9 +28,11 @@ export default function SeatsScreen() {
   const [count, setCount] = useState("");
   const [label, setLabel] = useState("");
   const [editing, setEditing] = useState<number | null>(null);
+  const styles = useStyles();
 
   if (seats.isLoading) return <LoadingView />;
   if (!seats.data) return <ErrorView error={seats.error} onRetry={() => seats.refetch()} />;
+  const editIndex = editing === null ? -1 : seats.data.findIndex((s) => s.id === editing);
 
   const addNumbered = () => {
     const n = Number(count);
@@ -29,8 +45,8 @@ export default function SeatsScreen() {
   };
 
   return (
-    <Screen edges={["bottom", "left", "right"]}>
-      <Text variant="body" color={colors.textMuted}>
+    <Screen>
+      <Text variant="caption" style={styles.intro}>
         {seats.data.length} seats. Tap a seat to rename it, mark a locker or remove it.
       </Text>
 
@@ -49,21 +65,34 @@ export default function SeatsScreen() {
         </View>
       </Section>
 
-      <Section title="Seats">
-        {seats.data.map((seat) =>
-          editing === seat.id ? (
-            <SeatEditor key={seat.id} seat={seat} onDone={() => setEditing(null)} />
-          ) : (
-            <Pressable key={seat.id} accessibilityRole="button" onPress={() => setEditing(seat.id)} style={styles.seatRow}>
-              <Text variant="bodyStrong" style={styles.flex}>
-                Seat {seat.label}
-              </Text>
-              {seat.hasLocker ? <Text variant="caption">Locker</Text> : null}
-            </Pressable>
-          ),
-        )}
-      </Section>
+      {/* The seat being edited opens in place, splitting the list around it. */}
+      {editIndex < 0 ? (
+        <SeatList title="Seats" seats={seats.data} onPick={setEditing} />
+      ) : (
+        <>
+          {editIndex > 0 ? <SeatList title="Seats" seats={seats.data.slice(0, editIndex)} onPick={setEditing} /> : null}
+          <SeatEditor key={editing} seat={seats.data[editIndex]!} onDone={() => setEditing(null)} />
+          <SeatList title={editIndex === 0 ? "Seats" : undefined} seats={seats.data.slice(editIndex + 1)} onPick={setEditing} />
+        </>
+      )}
     </Screen>
+  );
+}
+
+function SeatList({ title, seats, onPick }: { title?: string; seats: Seat[]; onPick: (id: number) => void }) {
+  if (!seats.length) return null;
+  return (
+    <ListSection title={title}>
+      {seats.map((seat) => (
+        <ListRow
+          key={seat.id}
+          title={`Seat ${seat.label}`}
+          icon={icons.seats}
+          value={seat.hasLocker ? "Locker" : undefined}
+          onPress={() => onPick(seat.id)}
+        />
+      ))}
+    </ListSection>
   );
 }
 
@@ -72,6 +101,7 @@ function SeatEditor({ seat, onDone }: { seat: Seat; onDone: () => void }) {
   const { update, remove } = useSeatMutations(library.id);
   const [label, setLabel] = useState(seat.label);
   const [hasLocker, setHasLocker] = useState(seat.hasLocker);
+  const styles = useStyles();
 
   const save = () =>
     update.mutate(
@@ -90,30 +120,22 @@ function SeatEditor({ seat, onDone }: { seat: Seat; onDone: () => void }) {
     ]);
 
   return (
-    <Card style={styles.editor}>
+    <Section title={`Edit seat ${seat.label}`}>
       <TextField label="Seat name" value={label} onChangeText={setLabel} autoCapitalize="characters" />
-      <View style={styles.row}>
-        <Switch value={hasLocker} onValueChange={setHasLocker} />
-        <Text variant="body">Has a locker</Text>
-      </View>
+      <ListSection>
+        <ListSwitchRow title="Has a locker" value={hasLocker} onValueChange={setHasLocker} />
+      </ListSection>
       <View style={styles.row}>
         <Button style={styles.flex} title="Save" onPress={save} loading={update.isPending} />
         <Button style={styles.flex} title="Cancel" variant="ghost" onPress={onDone} />
       </View>
       <Button title="Remove seat" variant="danger" onPress={confirmRemove} loading={remove.isPending} />
-    </Card>
+    </Section>
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles(() => ({
+  intro: { paddingHorizontal: spacing.xs },
   row: { flexDirection: "row", alignItems: "center", gap: spacing.md },
   flex: { flex: 1 },
-  seatRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: spacing.md,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.border,
-  },
-  editor: { gap: spacing.md },
-});
+}));

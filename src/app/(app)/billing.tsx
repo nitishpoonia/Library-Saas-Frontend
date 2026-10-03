@@ -1,6 +1,6 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { Alert, StyleSheet, View } from "react-native";
+import { Alert, View } from "react-native";
 import type { BillingPlan } from "@/api/types";
 import { useMe } from "@/features/account/queries";
 import {
@@ -12,7 +12,7 @@ import {
 } from "@/features/billing/queries";
 import { errorMessage } from "@/api/errors";
 import { formatDate, formatRupees } from "@/lib/format";
-import { Badge, Button, Card, ErrorView, LoadingView, Screen, Section, Text, colors, spacing } from "@/ui";
+import { Badge, Button, Card, ErrorView, ListRow, ListSection, LoadingView, Screen, Section, Text, makeStyles, spacing, useTheme } from "@/ui";
 
 /** How often to ask the server whether a paid-but-unconfirmed payment has landed. */
 const CONFIRM_POLL_MS = 5_000;
@@ -24,6 +24,8 @@ const PLAN_NAMES: Record<BillingPlan, string> = { MONTHLY: "1 month", QUARTERLY:
 /** The owner's subscription: status, plans priced for their branch count, history. */
 export default function BillingScreen() {
   const me = useMe();
+  const t = useTheme();
+  const styles = useStyles();
   const queryClient = useQueryClient();
   // A payment Razorpay took but the app couldn't confirm: wait for the webhook to land it.
   const [confirming, setConfirming] = useState<{ id: number; since: number } | null>(null);
@@ -72,7 +74,7 @@ export default function BillingScreen() {
         : { label: "Ended", detail: "Renew to keep adding students and fees", tone: "danger" as const };
 
   return (
-    <Screen edges={["bottom", "left", "right"]} refreshing={billing.isRefetching} onRefresh={() => billing.refetch()}>
+    <Screen refreshing={billing.isRefetching} onRefresh={() => billing.refetch()}>
       <Card style={styles.status}>
         <Badge label={status.label} tone={status.tone} />
         <Text variant="heading">{status.detail}</Text>
@@ -83,8 +85,10 @@ export default function BillingScreen() {
 
       {confirming ? (
         <Card style={styles.confirming}>
-          <Text variant="bodyStrong">Payment received. Confirming it with Razorpay…</Text>
-          <Text variant="caption">
+          <Text variant="bodyStrong" color={t.colors.warningText}>
+            Payment received. Confirming it with Razorpay…
+          </Text>
+          <Text variant="caption" color={t.colors.warningText}>
             {slow
               ? "This is taking longer than usual. Your money is safe and your plan will update on its own. Please don't pay again; if nothing changes within a day, contact support."
               : "This usually takes under a minute. Please don't pay again."}
@@ -93,9 +97,11 @@ export default function BillingScreen() {
       ) : null}
 
       {!b.razorpayKeyId ? (
-        <Text variant="body" color={colors.warning}>
-          Online payment isn't set up on the server yet.
-        </Text>
+        <Card style={styles.notice}>
+          <Text variant="caption" color={t.colors.warningText}>
+            Online payment isn't set up on the server yet.
+          </Text>
+        </Card>
       ) : null}
 
       <Section title={b.status === "ACTIVE" && b.usable ? "Renew" : "Choose a plan"}>
@@ -131,35 +137,25 @@ export default function BillingScreen() {
       ) : null}
 
       {b.history.length ? (
-        <Section title="Payments">
+        <ListSection title="Payments">
           {b.history.map((h) => (
-            <View key={h.id} style={styles.history}>
-              <View style={styles.flex}>
-                <Text variant="body">{h.kind === "PLAN" && h.plan ? PLAN_NAMES[h.plan] : "Extra branch"}</Text>
-                <Text variant="caption">
-                  {h.paidAt ? formatDate(h.paidAt.slice(0, 10)) : ""}
-                  {h.periodEnd ? ` · till ${formatDate(h.periodEnd.slice(0, 10))}` : ""}
-                </Text>
-              </View>
-              <Text variant="bodyStrong">{formatRupees(h.amountPaise / 100)}</Text>
-            </View>
+            <ListRow
+              key={h.id}
+              title={h.kind === "PLAN" && h.plan ? PLAN_NAMES[h.plan] : "Extra branch"}
+              subtitle={`${h.paidAt ? formatDate(h.paidAt.slice(0, 10)) : ""}${h.periodEnd ? ` · till ${formatDate(h.periodEnd.slice(0, 10))}` : ""}`}
+              value={formatRupees(h.amountPaise / 100)}
+            />
           ))}
-        </Section>
+        </ListSection>
       ) : null}
     </Screen>
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((t) => ({
   status: { gap: spacing.sm },
-  confirming: { gap: spacing.xs, backgroundColor: colors.warningSoft, borderColor: "#FDE68A" },
+  notice: { backgroundColor: t.colors.warningSoft },
+  confirming: { gap: spacing.xs, backgroundColor: t.colors.warningSoft },
   plan: { flexDirection: "row", alignItems: "center", gap: spacing.md },
   flex: { flex: 1, gap: spacing.xs },
-  history: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: spacing.sm,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.border,
-  },
-});
+}));

@@ -15,7 +15,8 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   scheme: "librarysaas",
   orientation: "portrait",
   icon: "./assets/images/icon.png",
-  userInterfaceStyle: "light",
+  // Follows the phone's light/dark setting; every color in the app has a dark version.
+  userInterfaceStyle: "automatic",
   android: {
     package: "com.librarysaas",
     versionCode: 15,
@@ -35,6 +36,8 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   },
   plugins: [
     "expo-router",
+    // Material 3 app theme on Android (needed by the Material date/time pickers).
+    "./plugins/withMaterial3Theme",
     "expo-secure-store",
     [
       "expo-splash-screen",
@@ -42,6 +45,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
         backgroundColor: "#FFFFFF",
         image: "./assets/images/splash-icon.png",
         imageWidth: 96,
+        dark: { backgroundColor: "#000000" },
       },
     ],
     [

@@ -1,14 +1,12 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
-import { Link } from "expo-router";
 import { useForm } from "react-hook-form";
-import { View } from "react-native";
 import { accountApi } from "@/features/account/api";
-import { AuthShell } from "@/features/auth/AuthShell";
+import { AuthShell, AuthSwitch } from "@/features/auth/AuthShell";
 import { signUpSchema, type SignUpValues } from "@/features/auth/schemas";
 import { applyServerErrors } from "@/features/auth/useServerErrors";
 import { useSession } from "@/session/SessionProvider";
-import { Button, ErrorBanner, FormTextField, Text, colors, spacing } from "@/ui";
+import { Button, ErrorBanner, FormTextField } from "@/ui";
 
 export default function SignUpScreen() {
   const { signIn } = useSession();
@@ -49,16 +47,7 @@ export default function SignUpScreen() {
       />
       <ErrorBanner error={signup.error && !Object.keys(form.formState.errors).length ? signup.error : null} />
       <Button title="Create account" onPress={onSubmit} loading={signup.isPending} />
-      <View style={{ flexDirection: "row", justifyContent: "center", gap: spacing.xs }}>
-        <Text variant="body" color={colors.textMuted}>
-          Already have an account?
-        </Text>
-        <Link href="/sign-in" replace>
-          <Text variant="bodyStrong" color={colors.primary}>
-            Sign in
-          </Text>
-        </Link>
-      </View>
+      <AuthSwitch prompt="Already have an account?" action="Sign in" href="/sign-in" />
     </AuthShell>
   );
 }

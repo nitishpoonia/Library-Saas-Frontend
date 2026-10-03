@@ -4,7 +4,7 @@ import { router } from "expo-router";
 import { z } from "zod";
 import { isApiError } from "@/api/errors";
 import { formatRupees } from "@/lib/format";
-import { Button, ErrorBanner, FormTextField, Text, colors } from "@/ui";
+import { Button, Card, ErrorBanner, FormTextField, Text, useTheme } from "@/ui";
 import { applyServerErrors } from "../auth/useServerErrors";
 import { useCreateLibrary } from "./queries";
 
@@ -23,6 +23,7 @@ export function LibraryForm({ onCreated, submitLabel }: { onCreated: (id: number
     defaultValues: { name: "", address: "", seatCount: "" },
   });
   const create = useCreateLibrary();
+  const t = useTheme();
 
   const onSubmit = form.handleSubmit((values) =>
     create.mutate(values, {
@@ -51,10 +52,12 @@ export function LibraryForm({ onCreated, submitLabel }: { onCreated: (id: number
       />
       {needsPayment ? (
         <>
-          <Text variant="body" color={colors.warning}>
-            Your plan covers your current branches. Adding one more costs {formatRupees(amountPaise / 100)} until your plan
-            renews.
-          </Text>
+          <Card style={{ backgroundColor: t.colors.warningSoft }}>
+            <Text variant="caption" color={t.colors.warningText}>
+              Your plan covers your current branches. Adding one more costs {formatRupees(amountPaise / 100)} until your plan
+              renews.
+            </Text>
+          </Card>
           <Button title="Pay for one more branch" variant="secondary" onPress={() => router.push("/billing")} />
         </>
       ) : (

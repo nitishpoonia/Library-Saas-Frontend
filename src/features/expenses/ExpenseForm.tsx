@@ -3,7 +3,7 @@ import { Controller, useForm } from "react-hook-form";
 import { View } from "react-native";
 import { z } from "zod";
 import { todayLocal } from "@/lib/format";
-import { Button, Chips, DateField, ErrorBanner, FormTextField, Screen, Text, spacing } from "@/ui";
+import { Button, Chips, DateField, ErrorBanner, FieldLabel, FormTextField, Screen, Text, spacing } from "@/ui";
 import type { ExpenseInput } from "./api";
 
 const COMMON = ["Rent", "Electricity", "Internet", "Salary", "Cleaning", "Maintenance", "Other"];
@@ -50,14 +50,14 @@ export function ExpenseForm({
   );
 
   return (
-    <Screen form edges={["bottom", "left", "right"]} footer={<Button title={submitLabel} onPress={submit} loading={saving} />}>
+    <Screen form footer={<Button title={submitLabel} onPress={submit} loading={saving} />}>
       <FormTextField control={form.control} name="title" label="What was it for?" placeholder="October rent" />
       <Controller
         control={form.control}
         name="category"
         render={({ field }) => (
           <View style={{ gap: spacing.sm }}>
-            <Text variant="label">Category</Text>
+            <FieldLabel>Category</FieldLabel>
             <Chips
               options={COMMON.map((c) => ({ value: c, label: c }))}
               value={COMMON.includes(field.value) ? field.value : null}

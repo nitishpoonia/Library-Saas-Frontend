@@ -1,5 +1,5 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { keys } from "@/api/keys";
+import { keepWithinBranch, keys } from "@/api/keys";
 import { studentsApi, type NewStudentInput, type RenewalInput, type StudentStatusFilter } from "./api";
 
 /**
@@ -20,6 +20,7 @@ export function useRefreshBranch(libraryId: number) {
 export function useStudents(libraryId: number, status: StudentStatusFilter, search: string) {
   return useInfiniteQuery({
     queryKey: keys.students(libraryId, { status, search }),
+    placeholderData: keepWithinBranch(libraryId),
     queryFn: ({ pageParam }) => studentsApi.list(libraryId, { status, search, page: pageParam }),
     initialPageParam: 1,
     getNextPageParam: (last) => (last.meta.hasNextPage ? last.meta.page + 1 : undefined),

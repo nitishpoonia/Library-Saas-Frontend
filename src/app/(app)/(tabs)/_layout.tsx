@@ -1,35 +1,49 @@
-import Ionicons from "@expo/vector-icons/Ionicons";
-import { Tabs } from "expo-router/js-tabs";
-import type { ColorValue } from "react-native";
+import { NativeTabs } from "expo-router/unstable-native-tabs";
+import { Platform } from "react-native";
 import { useCanManage } from "@/session/CurrentLibrary";
-import { colors, fonts } from "@/ui";
+import { useTheme } from "@/ui";
 
-type IconName = React.ComponentProps<typeof Ionicons>["name"];
-
-const icon =
-  (focused: IconName, idle: IconName) =>
-  ({ color, size, focused: isFocused }: { color: ColorValue; size: number; focused: boolean }) => (
-    <Ionicons name={isFocused ? focused : idle} size={size} color={color as string} />
-  );
-
+/**
+ * The system tab bar: Liquid Glass on iOS 26 (it shrinks while you scroll down), the
+ * translucent bar on older iOS, and the Material 3 navigation bar on Android.
+ */
 export default function TabsLayout() {
   const canManage = useCanManage();
+  const t = useTheme();
+  const c = t.colors;
+
   return (
-    <Tabs
-      screenOptions={{
-        headerShown: false,
-        tabBarActiveTintColor: colors.accent,
-        tabBarInactiveTintColor: colors.textFaint,
-        tabBarLabelStyle: { fontFamily: fonts.medium, fontSize: 12 },
-      }}
+    <NativeTabs
+      minimizeBehavior="onScrollDown"
+      {...(Platform.OS === "android"
+        ? {
+            backgroundColor: c.surface,
+            indicatorColor: c.secondaryContainer,
+            rippleColor: c.ripple,
+            iconColor: { default: c.textMuted, selected: c.onSecondaryContainer },
+            labelStyle: { default: { color: c.textMuted }, selected: { color: c.text } },
+            labelVisibilityMode: "labeled" as const,
+          }
+        : {})}
     >
-      <Tabs.Screen name="index" options={{ title: "Home", tabBarIcon: icon("home", "home-outline") }} />
-      <Tabs.Screen name="students" options={{ title: "Students", tabBarIcon: icon("people", "people-outline") }} />
-      <Tabs.Screen
-        name="money"
-        options={{ title: "Expenses", href: canManage ? undefined : null, tabBarIcon: icon("wallet", "wallet-outline") }}
-      />
-      <Tabs.Screen name="menu" options={{ title: "Menu", tabBarIcon: icon("menu", "menu-outline") }} />
-    </Tabs>
+      <NativeTabs.Trigger name="(home)">
+        <NativeTabs.Trigger.Icon sf={{ default: "house", selected: "house.fill" }} md="home" />
+        <NativeTabs.Trigger.Label>Home</NativeTabs.Trigger.Label>
+      </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="(students)">
+        <NativeTabs.Trigger.Icon sf={{ default: "person.2", selected: "person.2.fill" }} md="group" />
+        <NativeTabs.Trigger.Label>Students</NativeTabs.Trigger.Label>
+      </NativeTabs.Trigger>
+      {/* Only owners and managers see expenses. The tab stays declared and is hidden, since
+          native tabs can't be added or removed after launch. */}
+      <NativeTabs.Trigger name="(money)" hidden={!canManage}>
+        <NativeTabs.Trigger.Icon sf={{ default: "indianrupeesign.circle", selected: "indianrupeesign.circle.fill" }} md="account_balance_wallet" />
+        <NativeTabs.Trigger.Label>Expenses</NativeTabs.Trigger.Label>
+      </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="(menu)">
+        <NativeTabs.Trigger.Icon sf={{ default: "ellipsis.circle", selected: "ellipsis.circle.fill" }} md="more_horiz" />
+        <NativeTabs.Trigger.Label>More</NativeTabs.Trigger.Label>
+      </NativeTabs.Trigger>
+    </NativeTabs>
   );
 }

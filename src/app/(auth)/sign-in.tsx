@@ -1,14 +1,12 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
-import { Link } from "expo-router";
 import { useForm } from "react-hook-form";
-import { View } from "react-native";
 import { accountApi } from "@/features/account/api";
-import { AuthShell } from "@/features/auth/AuthShell";
+import { AuthShell, AuthSwitch } from "@/features/auth/AuthShell";
 import { signInSchema, type SignInValues } from "@/features/auth/schemas";
 import { applyServerErrors } from "@/features/auth/useServerErrors";
 import { useSession } from "@/session/SessionProvider";
-import { Button, ErrorBanner, FormTextField, Text, colors, spacing } from "@/ui";
+import { Button, ErrorBanner, FormTextField } from "@/ui";
 
 export default function SignInScreen() {
   const { signIn } = useSession();
@@ -48,16 +46,7 @@ export default function SignInScreen() {
       />
       <ErrorBanner error={login.error && !Object.keys(form.formState.errors).length ? login.error : null} />
       <Button title="Sign in" onPress={onSubmit} loading={login.isPending} />
-      <View style={{ flexDirection: "row", justifyContent: "center", gap: spacing.xs }}>
-        <Text variant="body" color={colors.textMuted}>
-          New here?
-        </Text>
-        <Link href="/sign-up" replace>
-          <Text variant="bodyStrong" color={colors.primary}>
-            Create an account
-          </Text>
-        </Link>
-      </View>
+      <AuthSwitch prompt="New here?" action="Create an account" href="/sign-up" />
     </AuthShell>
   );
 }

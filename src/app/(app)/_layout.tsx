@@ -2,7 +2,8 @@ import { Stack } from "expo-router";
 import { useMe } from "@/features/account/queries";
 import { useNotifications } from "@/features/notifications/useNotifications";
 import { CurrentLibraryProvider, useCanManage, useCurrentLibrary } from "@/session/CurrentLibrary";
-import { ErrorView, LoadingView, colors, fonts } from "@/ui";
+import { useMemo } from "react";
+import { ErrorView, LoadingView, stackOptions, useTheme } from "@/ui";
 
 export default function AppLayout() {
   return (
@@ -21,6 +22,8 @@ function AppStack() {
   const { library, isLoading } = useCurrentLibrary();
   const canManage = useCanManage();
   const isOwner = !!me.data?.organization;
+  const theme = useTheme();
+  const screenOptions = useMemo(() => stackOptions(theme), [theme]);
   useNotifications(library !== null);
 
   if (isLoading) return <LoadingView />;
@@ -31,15 +34,7 @@ function AppStack() {
   const hasBranch = library !== null;
 
   return (
-    <Stack
-      screenOptions={{
-        headerShadowVisible: false,
-        headerTitleStyle: { fontFamily: fonts.bold, fontSize: 17, color: colors.text },
-        headerTintColor: colors.text,
-        headerBackButtonDisplayMode: "minimal",
-        contentStyle: { backgroundColor: colors.background },
-      }}
-    >
+    <Stack screenOptions={screenOptions}>
       <Stack.Protected guard={hasBranch}>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="branches/new" options={{ title: "New branch", presentation: "modal" }} />

@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { keys } from "@/api/keys";
-import { colors } from "@/ui";
+import { brandColor } from "@/ui";
 import { billingApi, type OrderRequest } from "./api";
 import { checkout, type Prefill } from "./checkout";
 
@@ -14,7 +14,7 @@ export function useBilling(pollMs?: number) {
 export function useCheckout(prefill: Prefill) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (request: OrderRequest) => checkout(request, prefill, colors.primary),
+    mutationFn: (request: OrderRequest) => checkout(request, prefill, brandColor),
     onSuccess: (summary) => {
       queryClient.setQueryData(keys.billing, summary);
       refreshAfterPayment(queryClient);

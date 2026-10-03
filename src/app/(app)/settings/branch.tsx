@@ -40,7 +40,7 @@ function BranchForm({ library }: { library: Library }) {
   );
 
   return (
-    <Screen form edges={["bottom", "left", "right"]} footer={<Button title="Save" onPress={onSubmit} loading={update.isPending} />}>
+    <Screen form footer={<Button title="Save" onPress={onSubmit} loading={update.isPending} />}>
       <FormTextField control={form.control} name="name" label="Branch name" />
       <FormTextField control={form.control} name="address" label="Address" />
       <FormTextField control={form.control} name="gracePeriodDays" label="Hold seats for (days)" keyboardType="number-pad" />

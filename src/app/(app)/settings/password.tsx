@@ -34,7 +34,7 @@ export default function PasswordScreen() {
   );
 
   return (
-    <Screen form edges={["bottom", "left", "right"]} footer={<Button title="Change password" onPress={onSubmit} loading={change.isPending} />}>
+    <Screen form footer={<Button title="Change password" onPress={onSubmit} loading={change.isPending} />}>
       <FormTextField control={form.control} name="currentPassword" label="Current password" secureTextEntry autoComplete="current-password" />
       <FormTextField control={form.control} name="newPassword" label="New password" hint="At least 8 characters" secureTextEntry autoComplete="new-password" />
       <FormTextField control={form.control} name="confirm" label="Type it again" secureTextEntry autoComplete="new-password" />
