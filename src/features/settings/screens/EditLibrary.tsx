@@ -35,7 +35,6 @@ const EditLibrary = () => {
       seats: dataSentInParams?.seats,
     },
   });
-  console.log('Data sent in params', dataSentInParams);
 
   const { mutate, isPending } = useUpdateLibraryDetails();
 
@@ -45,7 +44,6 @@ const EditLibrary = () => {
       address: data.address,
       seats: data.seats,
     };
-    console.log('Library udpate data', libraryUpdateData);
 
     mutate(libraryUpdateData, {
       onSuccess: response => {
@@ -56,7 +54,6 @@ const EditLibrary = () => {
         Keyboard.dismiss();
       },
       onError: error => {
-        console.log('Error in ', error);
 
         Toast.show({
           type: 'error',

@@ -5,7 +5,6 @@ import { fontFamily } from '../../../constants/fonts';
 import { formatAmount } from '../../../utils/FormatAmount';
 
 const ExpenseCard = memo(item => {
-  console.log('EXpense item', item);
   const nestedItem = item.item;
   return (
     <View style={styles.expenseCard}>

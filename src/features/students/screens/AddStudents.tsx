@@ -207,7 +207,6 @@ const AddStudentScreen = () => {
       (seat: any) => seat.id === selectedSeatId,
     );
     const libraryData = await getLibraryData();
-    console.log('LIbrary Data', libraryData);
 
     const studentData = {
       name,
@@ -221,7 +220,6 @@ const AddStudentScreen = () => {
       library_id: Number(libraryId),
     };
 
-    console.log('Student Data:', studentData);
     addStudent(studentData, {
       onSuccess: data => {
         Toast.show({
@@ -231,7 +229,6 @@ const AddStudentScreen = () => {
         queryClient.invalidateQueries({
           queryKey: ['dashboardOverview'],
         });
-        console.log('success data', data);
         const { receipt, student } = data; // adjust based on your axios response shape
         setReceiptData({
           receipt_number: receipt.receipt_number,

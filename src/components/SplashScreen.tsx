@@ -21,7 +21,6 @@ const SplashScreen = () => {
     try {
       // Check if auth data exists in keychain
       const authData = await getAuthData();
-      console.log(';Auth data', authData);
 
       if (authData) {
         // User is authenticated, initialize auth state

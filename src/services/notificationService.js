@@ -26,7 +26,6 @@ export const useNotificationService = () => {
   const getFCMToken = async () => {
     try {
       const token = await messaging().getToken();
-      console.log('FCM Token:', token);
       return token;
     } catch (error) {
       console.error('Error getting FCM token:', error);
@@ -40,7 +39,6 @@ export const useNotificationService = () => {
         '/notification/register-notification-token',
         { token },
       );
-      console.log('log for register token', response);
 
       return response;
     } catch (error) {
@@ -61,30 +59,16 @@ export const useNotificationService = () => {
 
     setup();
 
-    const unsubscribeOnMessage = messaging().onMessage(async remoteMessage => {
-      console.log('Foreground notification:', remoteMessage);
-    });
+    // TODO(REVIEW FN1/FN2): show foreground messages, open the right screen on tap,
+    // and register the background handler in index.js instead of here.
+    const unsubscribeOnMessage = messaging().onMessage(async () => {});
 
-    const unsubscribeOnOpen = messaging().onNotificationOpenedApp(
-      remoteMessage => {
-        console.log('Notification opened app:', remoteMessage);
-      },
-    );
+    const unsubscribeOnOpen = messaging().onNotificationOpenedApp(() => {});
 
-    messaging().setBackgroundMessageHandler(async remoteMessage => {
-      console.log('Background notification:', remoteMessage);
-    });
+    messaging().setBackgroundMessageHandler(async () => {});
 
-    messaging()
-      .getInitialNotification()
-      .then(remoteMessage => {
-        if (remoteMessage) {
-          console.log('App opened from quit state:', remoteMessage);
-        }
-      });
 
     const unsubscribeTokenRefresh = messaging().onTokenRefresh(token => {
-      console.log('Token refreshed:', token);
       registerDeviceToken(token);
     });
 

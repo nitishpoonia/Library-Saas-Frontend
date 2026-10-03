@@ -21,15 +21,10 @@ import { useGetAllLibraries } from '../../dashboard/dashboardQueries/dashboardQu
 
 const Library = () => {
   const navigation = useNavigation();
-  const {
-    data: profileData,
-
-    isLoading,
-  } = useGetUserProfile();
+  const { isLoading } = useGetUserProfile();
   const { data: libraryData, isLoading: isLibraryIdLoading } =
     useGetAllLibraries();
 
-  console.log('profile data', profileData);
   const exactLevelData = libraryData?.libraries[0];
   const libraryId = exactLevelData?.id;
   const {
@@ -37,7 +32,6 @@ const Library = () => {
     isRefetching,
     refetch,
   } = useGetLibraryDetail(libraryId);
-  console.log('One library data', oneLibraryData);
   const dataSentInParams = {
     name: exactLevelData.name,
     address: exactLevelData?.address,

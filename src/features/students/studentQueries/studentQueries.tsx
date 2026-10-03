@@ -46,9 +46,6 @@ export function useGetStudents(libraryId: number, search: string) {
 export function useDeleteStudent() {
   return useMutation({
     mutationFn: (studentId: string) => deleteStudent(studentId),
-    onError: error => {
-      console.log('Error deleting student', error);
-    },
   });
 }
 

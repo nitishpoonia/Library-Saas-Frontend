@@ -23,7 +23,6 @@ const Profile = () => {
     isLoading,
     refetch,
   } = useGetUserProfile();
-  console.log('profile data', profileData);
   const exactLevelData = profileData?.data?.userProfile;
 
   if (isLoading) {

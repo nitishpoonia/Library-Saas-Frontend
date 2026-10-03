@@ -125,14 +125,12 @@ export interface MembershipRenewalResponse {
 }
 
 export async function addStudent(studentData: student) {
-  console.log('Student data', studentData);
 
   try {
     const res = await apiClientWithAuth.post(
       ENDPOINTS.STUDENT.ADD,
       studentData,
     );
-    console.log('Res of addStudent', res.data);
 
     return res.data;
   } catch (error: any) {

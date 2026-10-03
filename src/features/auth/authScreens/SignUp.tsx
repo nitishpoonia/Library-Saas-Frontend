@@ -49,7 +49,6 @@ const SignUp = () => {
 
   const onSubmit = data => {
     dispatch(setSignupLoading(true));
-    console.log('Form Data:', data);
     const payload = {
       name: data.name,
       identifier: data.identifier.trim().toLowerCase(),

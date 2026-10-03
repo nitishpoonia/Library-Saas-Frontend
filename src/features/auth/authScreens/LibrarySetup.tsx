@@ -39,7 +39,6 @@ const LibrarySetup = () => {
   const { mutate, isPending } = useCreateLibraryQuery();
   const dispatch = useDispatch();
   const onSubmit = data => {
-    console.log('Form Data:', data);
     const payload = {
       name: data.name.trim(),
       seats: parseInt(data.seats, 10),
@@ -47,14 +46,13 @@ const LibrarySetup = () => {
     };
 
     mutate(payload, {
-      onSuccess: response => {
+      onSuccess: () => {
         Toast.show({
           type: 'success',
           text1: 'Library Created Successfully',
           text2: 'Your library has been set up and is ready to use',
         });
 
-        console.log('Response for create libary', response);
         dispatch(setLibraryCreated(true));
         reset();
       },

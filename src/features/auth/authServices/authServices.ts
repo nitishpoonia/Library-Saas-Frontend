@@ -6,14 +6,12 @@ import {
 import { LoginResponse } from '../authTypes/index.types';
 
 export const login = async (payload: any): Promise<LoginResponse> => {
-  console.log('Login loging', payload);
 
   try {
     const response = await apiClientWithoutAuth.post<LoginResponse>(
       ENDPOINTS.AUTH.SIGN_IN,
       payload,
     );
-    console.log('Response login', response);
 
     return response.data;
   } catch (error: any) {
@@ -47,7 +45,6 @@ export const createLibrary = async (payload: any): Promise<any> => {
       payload,
     );
 
-    console.log('Crete library response', response);
 
     return response.data;
   } catch (error: any) {

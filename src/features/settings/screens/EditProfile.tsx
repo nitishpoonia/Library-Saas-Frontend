@@ -53,7 +53,6 @@ const EditProfile = () => {
         Keyboard.dismiss();
       },
       onError: error => {
-        console.log('Error in ', error);
 
         Toast.show({
           type: 'error',

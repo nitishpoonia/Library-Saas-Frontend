@@ -8,7 +8,6 @@ export const useSignupQuery = () => {
 };
 
 export const useSignInQuery = () => {
-  console.log('In sign in query');
   
   return useMutation({
     mutationFn: payload => login(payload),
