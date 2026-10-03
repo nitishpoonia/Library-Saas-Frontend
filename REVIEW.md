@@ -27,22 +27,25 @@ Line numbers refer to commit `main` as of 29 Sep 2026. Backend findings, the sys
   Where: `android/gradle.properties:46–49`.
   Problem: the upload keystore alias and passwords are committed in a public repo, and the password is weak. The keystore file itself isn't in the repo, but anyone who ever gets it now has everything needed to sign an update as you.
   Fix direction: move signing values out of the repo (your user-level Gradle properties or CI secrets), change the keystore passwords, and if the keystore file was ever shared or uploaded anywhere, ask Google Play to reset the upload key.
-  **Status:** values removed from the repo (`fix/security-hotfixes`). Still to do by the owner: change the keystore passwords, because the old ones stay in git history.
+  **Status:** fixed: no signing values in the repo; the Expo app signs through EAS credentials. Still change the old keystore passwords.
 
 - [x] **FS2 · P1 · Release builds allow plain HTTP to any server.**
   Where: `android/app/src/main/AndroidManifest.xml:5` (`usesCleartextTraffic="true"`), `res/xml/network_security_config.xml` (a LAN IP).
   Problem: this is in the *main* manifest, so the store build allows unencrypted traffic too. It's only needed for local development.
   Fix direction: keep cleartext settings in the debug manifest only.
+  **Status:** fixed in the Expo app (`feat/expo-app`): cleartext is allowed only in the generated debug manifest.
 
 - [x] **FS3 · P1 · Passwords and tokens written to device logs.**
   Where: `features/auth/authServices/authServices.ts:9` logs the login payload (password), `:16` logs the full response (token), `components/SplashScreen.tsx:24` logs the stored auth data (token). There are 79 `console.*` calls in `src/`.
   Problem: on Android, release builds still write `console` output to the system log, which other tools on the device can read.
   Fix direction: remove sensitive logs, and strip `console` calls from release builds with a Babel plugin.
+  **Status:** fixed in the Expo app (`feat/expo-app`): no sensitive logs, and `transform-remove-console` strips console calls from release bundles.
 
-- [ ] **FS4 · P1 · Logout leaves the previous owner's data and notifications on the device.**
+- [x] **FS4 · P1 · Logout leaves the previous owner's data and notifications on the device.**
   Where: `features/auth/authSlice/authSlice.ts:156–167`, `features/settings/screens/Menu.tsx:93`.
   Problem: logout clears Keychain and AsyncStorage, but not the React Query cache, which holds students and payments for up to 30 minutes. A different owner who logs in on the same phone can see the previous owner's lists until they refetch. The device's push token also stays attached to the old owner on the server, so that owner's alerts keep arriving on this phone.
   Fix direction: on logout, clear the query cache, call the backend logout, and unregister the device token **(needs backend: device token table, D8)**.
+  **Status:** fixed in the Expo app (`feat/expo-app`): sign-out revokes the session on the server and clears the query cache. Device token removal comes with push notifications.
 
 - [ ] **FS5 · P3 · `google-services.json` is in a public repo.**
   Firebase config isn't a secret by itself, but make sure the API key in it is restricted to your app in Google Cloud, and consider Firebase App Check.
@@ -55,62 +58,71 @@ Line numbers refer to commit `main` as of 29 Sep 2026. Backend findings, the sys
 
 ## 2. Session and auth
 
-- [ ] **FA1 · P1 · Expired token leaves the user stuck.**
+- [x] **FA1 · P1 · Expired token leaves the user stuck.**
   Where: `constants/api/client.ts` (a request interceptor, but no response interceptor).
   Problem: tokens expire after 7 days. After that, the app still thinks the user is logged in (the token is only read from Keychain, never checked), every API call fails, and screens show blank data. The user has no way out except finding logout in the menu.
   Fix direction: a response interceptor that handles 401 in one place, by refreshing the token **(needs backend S7)** or logging out and returning to sign-in.
+  **Status:** fixed in the Expo app (`feat/expo-app`): the client refreshes once on 401 (shared by all waiting requests) and retries; a rejected refresh signs out.
 
-- [ ] **FA2 · P2 · Every app launch waits 2 extra seconds.**
+- [x] **FA2 · P2 · Every app launch waits 2 extra seconds.**
   Where: `components/SplashScreen.tsx:11–13`.
   Problem: the splash waits a fixed 2 seconds *before* reading Keychain. Use the native splash screen and check auth immediately.
+  **Status:** fixed in the Expo app (`feat/expo-app`): no fixed delay; the splash hides as soon as fonts and the session are ready.
 
-- [ ] **FA3 · P2 · Redux reducers write to storage.**
+- [x] **FA3 · P2 · Redux reducers write to storage.**
   Where: `authSlice.ts:97`, `:130`, `:147`, `:152`, `:165–166`.
   Problem: reducers call Keychain and AsyncStorage. Reducers must be pure: these writes are async and unawaited, so if one fails, Redux state and storage silently disagree (for example, logged in in memory, logged out on next launch).
   Fix direction: do the storage writes in the mutation's success handler or a Redux listener, then update state.
+  **Status:** fixed in the Expo app (`feat/expo-app`): Redux removed; storage writes happen in the session module, outside rendering.
 
-- [ ] **FA4 · P2 · The same data lives in three places.**
+- [x] **FA4 · P2 · The same data lives in three places.**
   Where: the library is stored in Redux (`auth.library`), AsyncStorage (`library-data`) and React Query (`allLibraries`). Sign-in and sign-up loading and error state are kept in Redux (`authSlice.ts:25–29`) while `useMutation` already tracks them.
   Problem: these copies drift. For example, `isLibraryCreated` comes from Keychain on launch, not from the server.
   Fix direction: server data only in React Query. A small session store holds only the token and the selected library id.
+  **Status:** fixed in the Expo app (`feat/expo-app`): server data only in React Query; the session holds tokens and the chosen branch.
 
-- [ ] **FA5 · P1 · The app assumes one library.**
+- [x] **FA5 · P1 · The app assumes one library.**
   Where: `features/dashboard/screens/Dashbaord.tsx:32` (`libraries[0]`), `libraryId` passed through route params and read from AsyncStorage (`AddStudents.tsx:209`).
   Problem: with branches, every screen needs to know which branch is selected, and switching branch must refresh everything.
   Fix direction: a "current library" in session state, a branch switcher, and every query key starting with the library id.
+  **Status:** fixed in the Expo app (`feat/expo-app`): current-branch context, branch switcher in Menu, add branch for owners.
 
 ---
 
 ## 3. Data layer (API calls and React Query)
 
-- [ ] **FD1 · P1 · Failed requests look like empty data.**
+- [x] **FD1 · P1 · Failed requests look like empty data.**
   Where: `features/dashboard/dashboardServices/dashboardService.ts:10–12` and `:22–24`, `features/settings/settingsServices/settingsServices.tsx:11–13`.
   Problem: these functions catch the error, log it and return `undefined`. React Query then treats the failure as success, so the dashboard shows blanks and `NaN%` occupancy instead of an error with a retry button. Other services throw `new Error(message)`, which loses the HTTP status code, so the app can't tell "not found" from "no internet" from "subscription expired".
   Fix direction: one API layer that always throws a normalized error (status, code, message), and error states on screens.
+  **Status:** fixed in the Expo app (`feat/expo-app`): one client, every failure becomes an ApiError with code; screens show error states with retry.
 
 - [ ] **FD2 · P1 · Lists don't update after changes.**
   Where: `features/students/studentQueries/studentQueries.tsx:18–27` (`useAddStudent` refreshes only the dashboard, not the student list, which is cached for 30 minutes at `:39`), `useDeleteStudent` refreshes nothing. Cache refreshes are also scattered across screens (`AddStudents.tsx:231`, `AddExpense.tsx:107`), and `ViewAllExpenses.tsx:72–79` deletes the cache on every focus, which defeats caching.
   Problem: an owner adds a student and doesn't see them in the list.
   Fix direction: one query-key factory per feature, and every mutation hook refreshes all the keys it affects. Screens never touch the cache directly.
 
-- [ ] **FD3 · P2 · Query key without the library id.**
+- [x] **FD3 · P2 · Query key without the library id.**
   Where: `features/settings/settingsQueries/settingsQueries.tsx:32` (`['libraryDetails']`).
   Problem: with branches, one branch's details will show for another.
+  **Status:** fixed in the Expo app (`feat/expo-app`): all keys come from `api/keys.ts` and start with the branch id.
 
-- [ ] **FD4 · P2 · Circular import through `index.js`.**
+- [x] **FD4 · P2 · Circular import through `index.js`.**
   Where: `studentQueries.tsx:1` imports `queryClient` from the app entry file, which imports `App`, which eventually imports `studentQueries`.
   Problem: circular imports can give `undefined` at startup depending on load order, and they break Fast Refresh.
   Fix direction: use `useQueryClient()` inside hooks, or move the client to its own module.
+  **Status:** fixed in the Expo app (`feat/expo-app`): the query client lives in its own module.
 
 - [ ] **FD5 · P2 · Types don't match the backend.**
   Where: 33 uses of `any`, mutation payloads typed `any`, and the student type in `service/studentService.ts:3–12` has `libarary_id` and `amount`, while the backend expects `library_id`, `total_fee` and `amount_paid`.
   Problem: TypeScript can't catch a wrong field name, which is exactly the kind of bug that reaches users.
   Fix direction: define request and response types once per endpoint. Once the backend has validation schemas (C2), share or generate the types from them.
 
-- [ ] **FD6 · P2 · Environment is switched by editing code.**
+- [x] **FD6 · P2 · Environment is switched by editing code.**
   Where: `constants/api/config.ts:6` (`IS_DEV = false`).
   Problem: it's easy to ship a build pointing at `localhost`, or test against production by accident.
   Fix direction: build-time environment config (dev/staging/prod), not a hardcoded flag.
+  **Status:** fixed in the Expo app (`feat/expo-app`): `EXPO_PUBLIC_API_URL` per build profile (`eas.json`).
 
 ---
 
@@ -137,16 +149,18 @@ Line numbers refer to commit `main` as of 29 Sep 2026. Backend findings, the sys
 - [ ] **FU2 · P2 · Very large components.**
   `ReceiptModal.tsx` 688 lines, `ListOfStudents.tsx` 608, `RenewMembershipModal.tsx` 584. Data fetching, formatting and UI are mixed in each. Split data hooks from presentational components.
 
-- [ ] **FU3 · P2 · No design system.**
+- [x] **FU3 · P2 · No design system.**
   Problem: 286 hardcoded hex colors across screens and components. `constants/theme.ts` is a leftover from the Expo template and isn't used. Changing the brand color or adding dark mode means editing dozens of files.
   Fix direction: shared tokens for colors, spacing and typography, plus a few base components (button, input, card, screen) that all screens use.
+  **Status:** fixed in the Expo app (`feat/expo-app`): `ui/theme.ts` tokens (same colours and Montserrat) and shared components.
 
 - [ ] **FU4 · P2 · Duplicated helpers.**
   `formatCurrency` is defined in 3 places (`Dashbaord.tsx:50`, `RenewMembershipModal.tsx:157`, `receiptHelpers.ts:14`) next to `utils/FormatAmount.ts`. `useDebounce` is defined inside `AddStudents.tsx:38`. Move each to one shared file.
 
-- [ ] **FU5 · P2 · Subscription status shown wrong.**
+- [x] **FU5 · P2 · Subscription status shown wrong.**
   Where: `Dashbaord.tsx:99`.
   Problem: anything that isn't `trial` is shown as "Active", including an expired subscription.
+  **Status:** fixed in the Expo app (`feat/expo-app`): the badge says trial, plan or ended.
 
 - [ ] **FU6 · P1 · The paused / overdue flow has no UI yet.**
   The confirmed rule needs: a paused badge with days left before cancellation, a filter for paused students, and a way to collect payment that re-activates the membership **(needs backend A2, A3)**.
@@ -162,13 +176,15 @@ Line numbers refer to commit `main` as of 29 Sep 2026. Backend findings, the sys
 
 ## 6. Navigation
 
-- [ ] **FNav1 · P2 · Navigators aren't typed.**
+- [x] **FNav1 · P2 · Navigators aren't typed.**
   Where: `features/students/studentNavigation/StudentNavigator.tsx`, `navigation/SetupNavigator.tsx` (no param lists), `route.params` cast with `as` in screens.
   Problem: a wrong screen name or missing param is only found at runtime.
   Fix direction: a param list type for every navigator and typed `useNavigation` and `useRoute`.
+  **Status:** fixed in the Expo app (`feat/expo-app`): Expo Router typed routes.
 
-- [ ] **FNav2 · P3 · Small navigation inconsistencies.**
+- [x] **FNav2 · P3 · Small navigation inconsistencies.**
   `LibrarySetup` is registered in both `AuthStack` and `SetupStack`. `StudentStack` has no initial route, so navigating to `Student` without a `screen` lands on Add Student.
+  **Status:** fixed in the Expo app (`feat/expo-app`).
 
 ---
 
@@ -187,24 +203,29 @@ src/
 
 Grouping by feature is the right choice. The problems are naming and what lives where.
 
-- [ ] **FC1 · P2 · Folder names differ in every feature.**
+- [x] **FC1 · P2 · Folder names differ in every feature.**
   Examples: `auth/authQuery/authQueries.tsx`, `dashboard/dashboardQueries/dashboardQuery.tsx`, `finance/financeQueries/`, `students/service/` vs `finance/services/` vs `settings/settingsServices/`, `students/studentNavigation/` vs `finance/navigation/` vs `helpfulInfo/helpfulInfoNavigator/`. Each new feature makes a new variation.
   Fix direction: the same fixed set of files in every feature (see target layout).
+  **Status:** fixed in the Expo app (`feat/expo-app`): one layout for every feature (see README).
 
-- [ ] **FC2 · P3 · Typos in file and identifier names.**
+- [x] **FC2 · P3 · Typos in file and identifier names.**
   `Dashbaord.tsx`, `ConfirmationModel.tsx` (modal), `udpatePassword`, "Helpfull Info" (visible in the UI at `Dashbaord.tsx:105`), `libarary_id`.
+  **Status:** fixed in the Expo app (`feat/expo-app`).
 
-- [ ] **FC3 · P3 · Wrong file types and locations.**
+- [x] **FC3 · P3 · Wrong file types and locations.**
   Service and query files use `.tsx` without JSX. `services/notificationService.js` is JavaScript in a TypeScript project. The API client lives in `constants/`. A hook (`useKeyboardHook.tsx`) lives in `components/layout/`.
+  **Status:** fixed in the Expo app (`feat/expo-app`).
 
-- [ ] **FC4 · P2 · No working tests or CI.**
+- [x] **FC4 · P2 · No working tests or CI.**
   `__tests__/App.test.tsx` imports `../App`, which doesn't exist (the app is in `src/App.tsx`), so `npm test` fails. Nothing runs lint or typecheck on push.
+  **Status:** fixed in the Expo app (`feat/expo-app`): Jest works (10 tests) and CI runs typecheck, tests and an Android bundle.
 
 - [ ] **FC5 · P2 · No crash reporting.**
   In production you won't know when the app crashes on a user's phone. Add a crash reporter before real users arrive.
 
-- [ ] **FC6 · P3 · README is the React Native template.**
+- [x] **FC6 · P3 · README is the React Native template.**
   It should say how to run the app against each environment and how to make a release build.
+  **Status:** fixed in the Expo app (`feat/expo-app`).
 
 ---
 

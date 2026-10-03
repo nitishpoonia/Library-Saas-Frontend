@@ -1,99 +1,57 @@
-> **Admin panel:** the web app for running the service lives in [`apps/admin`](apps/admin/README.md). It installs and builds on its own; the React Native tooling here ignores `apps/`.
+# Library SaaS — App
 
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
+> **Admin panel:** the web app for running the service lives in [`apps/admin`](apps/admin/README.md). It installs and builds on its own; the Expo app's TypeScript, Jest and Metro ignore `apps/`.
 
-# Getting Started
+Mobile app for library owners and their staff. Expo SDK 57, Expo Router, React Query, TypeScript. Talks to the backend's `/v1` API ([Libaray-Saas-Backend](https://github.com/nitishpoonia/Libaray-Saas-Backend)).
 
-> **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.
+## Run it
 
-## Step 1: Start Metro
+The app uses native modules (secure storage, push, printing), so it runs in a **development build**, not Expo Go.
 
-First, you will need to run **Metro**, the JavaScript build tool for React Native.
+1. `npm install`
+2. `cp .env.example .env` and set `EXPO_PUBLIC_API_URL` to your backend (the emulator reaches your computer at `10.0.2.2`).
+3. Build and install the development app once:
+   - on your computer with Android Studio: `npm run android`
+   - or in the cloud: `npx eas-cli@latest build --profile development --platform android`
+4. After that, `npm start` and open the project from the development app. Code changes reload instantly; rebuild only when native packages or `app.config.ts` change.
 
-To start the Metro dev server, run the following command from the root of your React Native project:
+## Scripts
 
-```sh
-# Using npm
-npm start
+| Script | What it does |
+|---|---|
+| `npm start` | Dev server for the development build |
+| `npm run android` | Build and run the development app on a device or emulator |
+| `npm run typecheck` | TypeScript check |
+| `npm test` | Unit tests (Jest) |
 
-# OR using Yarn
-yarn start
+## Releases
+
+Builds run on EAS (`eas.json`): `development`, `preview` (installable APK) and `production` (Play Store bundle).
+
+- `android.package` stays **`com.librarysaas`**; the Play Store knows the app by it.
+- Bump `android.versionCode` in `app.config.ts` for every store release.
+- The first production build asks for the signing key: upload the existing upload keystore to EAS (`eas credentials`) so the Play Store accepts the update. Never commit keystores.
+- `android/` and `ios/` are generated from `app.config.ts` (Continuous Native Generation) and aren't committed.
+
+## How the code is organised
+
+```
+src/
+  app/                 routes (Expo Router): every file is a screen
+    (auth)/            sign-in, sign-up: only reachable when signed out
+    (app)/             everything after sign-in
+      setup.tsx        first branch, when the account has none
+      (tabs)/          bottom tabs
+  api/                 HTTP client, errors, query keys, response types
+  session/             tokens, sign-in state, the current branch
+  features/<feature>/  api.ts (requests), queries.ts (React Query hooks), forms and pieces
+  ui/                  design system: theme tokens and shared components
+  lib/                 formatting and small helpers
 ```
 
-## Step 2: Build and run your app
+Rules that keep it consistent:
 
-With Metro running, open a new terminal window/pane from the root of your React Native project, and use one of the following commands to build and run your Android or iOS app:
-
-### Android
-
-```sh
-# Using npm
-npm run android
-
-# OR using Yarn
-yarn android
-```
-
-### iOS
-
-For iOS, remember to install CocoaPods dependencies (this only needs to be run on first clone or after updating native deps).
-
-The first time you create a new project, run the Ruby bundler to install CocoaPods itself:
-
-```sh
-bundle install
-```
-
-Then, and every time you update your native dependencies, run:
-
-```sh
-bundle exec pod install
-```
-
-For more information, please visit [CocoaPods Getting Started guide](https://guides.cocoapods.org/using/getting-started.html).
-
-```sh
-# Using npm
-npm run ios
-
-# OR using Yarn
-yarn ios
-```
-
-If everything is set up correctly, you should see your new app running in the Android Emulator, iOS Simulator, or your connected device.
-
-This is one way to run your app — you can also build it directly from Android Studio or Xcode.
-
-## Step 3: Modify your app
-
-Now that you have successfully run the app, let's make changes!
-
-Open `App.tsx` in your text editor of choice and make some changes. When you save, your app will automatically update and reflect these changes — this is powered by [Fast Refresh](https://reactnative.dev/docs/fast-refresh).
-
-When you want to forcefully reload, for example to reset the state of your app, you can perform a full reload:
-
-- **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Dev Menu**, accessed via <kbd>Ctrl</kbd> + <kbd>M</kbd> (Windows/Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (macOS).
-- **iOS**: Press <kbd>R</kbd> in iOS Simulator.
-
-## Congratulations! :tada:
-
-You've successfully run and modified your React Native App. :partying_face:
-
-### Now what?
-
-- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
-- If you're curious to learn more about React Native, check out the [docs](https://reactnative.dev/docs/getting-started).
-
-# Troubleshooting
-
-If you're having issues getting the above steps to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
-
-# Learn More
-
-To learn more about React Native, take a look at the following resources:
-
-- [React Native Website](https://reactnative.dev) - learn more about React Native.
-- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
-- [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
-- [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
-- [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
+- **Screens never call `fetch`.** They use hooks from `features/*/queries.ts`, which use `api/client.ts`.
+- **Every branch query key starts with `["library", id]`** (`api/keys.ts`), so switching branch never shows another branch's data.
+- **Every colour, font and spacing comes from `ui/theme.ts`.**
+- **Tokens:** the access token lives only in memory, the refresh token in the phone's secure storage. On a 401 the client refreshes once (shared by all requests waiting) and retries; if the refresh token is rejected, the app signs out and clears cached data.

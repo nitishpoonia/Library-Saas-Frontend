@@ -1,27 +1,19 @@
-const path = require('path');
-const { getDefaultConfig, mergeConfig } = require('@react-native/metro-config');
-
-// apps/ holds the web apps (admin panel). Keep Metro from crawling them and their
-// node_modules. Anchored to this project's own folder, so a parent folder that happens
-// to be called "apps" isn't blocked.
-const appsDir = path.resolve(__dirname, 'apps');
-const escapeForRegExp = value => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const path = require("path");
+const { getDefaultConfig } = require("expo/metro-config");
 
 /**
- * Metro configuration
- * https://reactnative.dev/docs/metro
- *
- * @type {import('@react-native/metro-config').MetroConfig}
+ * Expo's default Metro config, plus one rule: apps/ holds the web apps (the admin
+ * panel) with their own node_modules, so Metro must not crawl or resolve from it.
+ * Anchored to this project's folder, so a parent folder named "apps" isn't blocked.
  */
-const defaultConfig = getDefaultConfig(__dirname);
-const config = {
-  resolver: {
-    // Added to Metro's own block list, not replacing it.
-    blockList: [].concat(
-      defaultConfig.resolver?.blockList ?? [],
-      new RegExp(`^${escapeForRegExp(appsDir)}[\\\\/].*`),
-    ),
-  },
-};
+const config = getDefaultConfig(__dirname);
 
-module.exports = mergeConfig(defaultConfig, config);
+const appsDir = path.resolve(__dirname, "apps");
+const escapeForRegExp = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+config.resolver.blockList = [].concat(
+  config.resolver.blockList ?? [],
+  new RegExp(`^${escapeForRegExp(appsDir)}[\\\\/].*`),
+);
+
+module.exports = config;

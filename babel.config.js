@@ -1,13 +1,10 @@
-// Release builds bundle with NODE_ENV=production. In that case every console.* call is
-// removed, so error objects that carry tokens or personal data never reach the device log.
-const isProduction =
-  process.env.BABEL_ENV === 'production' || process.env.NODE_ENV === 'production';
-
-module.exports = {
-  presets: ['module:@react-native/babel-preset'],
-  plugins: [
-    ...(isProduction ? ['transform-remove-console'] : []),
-    // Must stay the last plugin.
-    'react-native-worklets/plugin',
-  ],
+// Release bundles are built with NODE_ENV=production. In that case every console.*
+// call is removed, so error objects carrying tokens or personal data never reach
+// the device log (REVIEW FS3). babel-preset-expo already adds the worklets plugin.
+module.exports = function (api) {
+  const production = api.env("production");
+  return {
+    presets: ["babel-preset-expo"],
+    plugins: production ? ["transform-remove-console"] : [],
+  };
 };
