@@ -1,5 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
+import { router } from "expo-router";
 import { z } from "zod";
 import { isApiError } from "@/api/errors";
 import { formatRupees } from "@/lib/format";
@@ -49,10 +50,13 @@ export function LibraryForm({ onCreated, submitLabel }: { onCreated: (id: number
         onSubmitEditing={onSubmit}
       />
       {needsPayment ? (
-        <Text variant="body" color={colors.warning}>
-          Your plan covers your current branches. Adding one more costs {formatRupees(amountPaise / 100)} until your plan
-          renews. Pay for it from Menu → Subscription.
-        </Text>
+        <>
+          <Text variant="body" color={colors.warning}>
+            Your plan covers your current branches. Adding one more costs {formatRupees(amountPaise / 100)} until your plan
+            renews.
+          </Text>
+          <Button title="Pay for one more branch" variant="secondary" onPress={() => router.push("/billing")} />
+        </>
       ) : (
         <ErrorBanner error={create.error && !Object.keys(form.formState.errors).length ? create.error : null} />
       )}

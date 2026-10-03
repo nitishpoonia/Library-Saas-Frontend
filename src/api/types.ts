@@ -144,3 +144,54 @@ export type Receipt = Payment & {
 };
 
 export type SeatAvailability = { id: number; label: string; position: number; hasLocker: boolean; available: boolean };
+
+export type Expense = {
+  id: number;
+  title: string;
+  category: string;
+  amount: number;
+  spentOn: string;
+  notes: string | null;
+  createdAt: string;
+};
+
+export type Seat = { id: number; label: string; position: number; hasLocker: boolean };
+
+export type StaffMember = {
+  id: number;
+  role: "MANAGER" | "STAFF";
+  createdAt: string;
+  user: { id: number; name: string; phone: string | null; email: string | null };
+};
+
+export type BillingPlan = "MONTHLY" | "QUARTERLY" | "YEARLY";
+
+export type BillingSummary = {
+  status: SubscriptionStatus;
+  usable: boolean;
+  trialEndsAt: string;
+  currentPeriodEnd: string | null;
+  branches: number;
+  billedBranches: number;
+  plans: Array<{ plan: BillingPlan; months: number; amountPaise: number }>;
+  branchAddon: { amountPaise: number; until: string } | null;
+  razorpayKeyId: string | null;
+  history: Array<{
+    id: number;
+    kind: "PLAN" | "BRANCH_ADDON";
+    plan: BillingPlan | null;
+    branches: number;
+    amountPaise: number;
+    periodStart: string | null;
+    periodEnd: string | null;
+    paidAt: string | null;
+  }>;
+};
+
+export type BillingOrder = {
+  subscriptionPaymentId: number;
+  orderId: string;
+  amountPaise: number;
+  currency: string;
+  keyId: string;
+};

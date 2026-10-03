@@ -33,6 +33,11 @@ Builds run on EAS (`eas.json`): `development`, `preview` (installable APK) and `
 - The first production build asks for the signing key: upload the existing upload keystore to EAS (`eas credentials`) so the Play Store accepts the update. Never commit keystores.
 - `android/` and `ios/` are generated from `app.config.ts` (Continuous Native Generation) and aren't committed.
 
+## Payments and notifications
+
+- **Subscription payments** use Razorpay Checkout (`react-native-razorpay`). The server creates the order and verifies the payment; the app never decides the amount. Needs Razorpay keys on the backend.
+- **Push notifications** (daily digest, subscription reminders) come through Firebase Cloud Messaging using `google-services.json`. Android only for now: iOS needs Firebase's iOS SDK or Expo's push service, because iOS device tokens aren't FCM tokens.
+
 ## How the code is organised
 
 ```

@@ -1,6 +1,7 @@
 import { Stack } from "expo-router";
 import { useMe } from "@/features/account/queries";
-import { CurrentLibraryProvider, useCurrentLibrary } from "@/session/CurrentLibrary";
+import { useNotifications } from "@/features/notifications/useNotifications";
+import { CurrentLibraryProvider, useCanManage, useCurrentLibrary } from "@/session/CurrentLibrary";
 import { ErrorView, LoadingView, colors, fonts } from "@/ui";
 
 export default function AppLayout() {
@@ -18,6 +19,9 @@ export default function AppLayout() {
 function AppStack() {
   const me = useMe();
   const { library, isLoading } = useCurrentLibrary();
+  const canManage = useCanManage();
+  const isOwner = !!me.data?.organization;
+  useNotifications(library !== null);
 
   if (isLoading) return <LoadingView />;
   // Only when there's nothing to show. A failed background refetch keeps the cached
@@ -45,6 +49,21 @@ function AppStack() {
         <Stack.Screen name="students/[studentId]/renew" options={{ title: "Renew membership" }} />
         <Stack.Screen name="memberships/[membershipId]/pay" options={{ title: "Collect fee" }} />
         <Stack.Screen name="receipts/[paymentId]" options={{ title: "Receipt" }} />
+        <Stack.Screen name="settings/profile" options={{ title: "Your profile" }} />
+        <Stack.Screen name="settings/password" options={{ title: "Change password" }} />
+
+        {/* The backend enforces roles too; hiding screens keeps the app from offering what would fail. */}
+        <Stack.Protected guard={canManage}>
+          <Stack.Screen name="expenses/new" options={{ title: "Add expense" }} />
+          <Stack.Screen name="expenses/[expenseId]" options={{ title: "Expense" }} />
+          <Stack.Screen name="settings/branch" options={{ title: "Branch settings" }} />
+          <Stack.Screen name="settings/seats" options={{ title: "Seats" }} />
+        </Stack.Protected>
+        <Stack.Protected guard={isOwner}>
+          <Stack.Screen name="settings/staff/index" options={{ title: "Staff logins" }} />
+          <Stack.Screen name="settings/staff/new" options={{ title: "Add a login" }} />
+          <Stack.Screen name="billing" options={{ title: "Subscription" }} />
+        </Stack.Protected>
       </Stack.Protected>
       <Stack.Protected guard={!hasBranch}>
         <Stack.Screen name="setup" options={{ headerShown: false }} />

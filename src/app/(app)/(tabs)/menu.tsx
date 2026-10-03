@@ -1,11 +1,15 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import * as Application from "expo-application";
 import { router } from "expo-router";
-import { Alert, Pressable, StyleSheet, View } from "react-native";
+import { Alert, Pressable, StyleSheet, Switch, View } from "react-native";
+import { request } from "@/api/client";
+import { errorMessage } from "@/api/errors";
+import { useSetNotifications } from "@/features/account/mutations";
+import { getRegisteredToken, unregisterDevice } from "@/features/notifications/push";
 import type { Role } from "@/api/types";
 import { useMe } from "@/features/account/queries";
 import { formatPhone } from "@/lib/format";
-import { useCurrentLibrary } from "@/session/CurrentLibrary";
+import { useCanManage, useCurrentLibrary } from "@/session/CurrentLibrary";
 import { useSession } from "@/session/SessionProvider";
 import { Badge, Card, Screen, Text, colors, spacing } from "@/ui";
 
@@ -15,12 +19,31 @@ export default function MenuScreen() {
   const me = useMe();
   const { library, libraries, select } = useCurrentLibrary();
   const { signOut } = useSession();
+  const canManage = useCanManage();
+  const setNotifications = useSetNotifications();
   const isOwner = !!me.data?.organization;
 
   const confirmSignOut = () =>
     Alert.alert("Sign out?", "You'll need your password to sign in again.", [
       { text: "Cancel", style: "cancel" },
-      { text: "Sign out", style: "destructive", onPress: () => void signOut() },
+      // Passing the push token stops this phone getting this account's notifications.
+      { text: "Sign out", style: "destructive", onPress: () => void signOut({ deviceToken: getRegisteredToken() ?? undefined }) },
+    ]);
+
+  const confirmSignOutEverywhere = () =>
+    Alert.alert("Sign out on all phones?", "Use this if a phone was lost. Everyone using this login has to sign in again.", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Sign out everywhere",
+        style: "destructive",
+        onPress: async () => {
+          // logout-all ends this session too, so the push token has to go first:
+          // afterwards there's no valid session left to remove it with.
+          await unregisterDevice().catch(() => {});
+          await request("POST", "/auth/logout-all").catch(() => {});
+          await signOut();
+        },
+      },
     ]);
 
   return (
@@ -54,8 +77,39 @@ export default function MenuScreen() {
         {isOwner ? <MenuRow icon="add-circle-outline" label="Add a branch" onPress={() => router.push("/branches/new")} /> : null}
       </View>
 
+      {canManage ? (
+        <View style={styles.section}>
+          <Text variant="heading">{library?.name}</Text>
+          <MenuRow icon="business-outline" label="Branch settings" onPress={() => router.push("/settings/branch")} />
+          <MenuRow icon="grid-outline" label="Seats" onPress={() => router.push("/settings/seats")} />
+          {isOwner ? <MenuRow icon="people-circle-outline" label="Staff logins" onPress={() => router.push("/settings/staff")} /> : null}
+        </View>
+      ) : null}
+
+      <View style={styles.section}>
+        <Text variant="heading">Account</Text>
+        {isOwner ? <MenuRow icon="card-outline" label="Subscription" onPress={() => router.push("/billing")} /> : null}
+        <MenuRow icon="person-outline" label="Your profile" onPress={() => router.push("/settings/profile")} />
+        <MenuRow icon="key-outline" label="Change password" onPress={() => router.push("/settings/password")} />
+        <View style={styles.menuRow}>
+          <Ionicons name="notifications-outline" size={22} color={colors.text} />
+          <Text variant="bodyStrong" style={styles.flex}>
+            Daily summary notifications
+          </Text>
+          <Switch
+            value={me.data?.user.notificationsEnabled ?? true}
+            onValueChange={(on) =>
+              setNotifications.mutate(on, {
+                onError: (e) => Alert.alert("Couldn't change notifications", errorMessage(e)),
+              })
+            }
+          />
+        </View>
+      </View>
+
       <View style={styles.section}>
         <MenuRow icon="log-out-outline" label="Sign out" danger onPress={confirmSignOut} />
+        <MenuRow icon="phone-portrait-outline" label="Sign out on all phones" danger onPress={confirmSignOutEverywhere} />
       </View>
 
       <Text variant="caption" style={styles.version}>

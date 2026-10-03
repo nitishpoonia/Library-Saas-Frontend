@@ -31,8 +31,21 @@ export function isApiError(error: unknown, code?: string): error is ApiError {
   return error instanceof ApiError && (code === undefined || error.code === code);
 }
 
+/**
+ * An error the app itself raises with a message written for the user (e.g. "The card
+ * was declined"). Plain `Error`s stay hidden behind a generic message, since their text
+ * can be anything from a library.
+ */
+export class UserFacingError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "UserFacingError";
+  }
+}
+
 /** A message that's safe to show the user for any error. */
 export function errorMessage(error: unknown): string {
+  if (error instanceof UserFacingError) return error.message;
   if (error instanceof ApiError) {
     if (error.code === NETWORK_ERROR) return "Can't reach the server. Check your internet and try again.";
     return error.message;

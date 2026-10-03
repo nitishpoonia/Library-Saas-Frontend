@@ -14,4 +14,9 @@ export const keys = {
   availability: (libraryId: number, params: Record<string, string | number>) =>
     ["library", libraryId, "availability", params] as const,
   receipt: (libraryId: number, paymentId: number) => ["library", libraryId, "receipt", paymentId] as const,
+  expenses: (libraryId: number, month?: string) =>
+    month ? (["library", libraryId, "expenses", month] as const) : (["library", libraryId, "expenses"] as const),
+  seats: (libraryId: number) => ["library", libraryId, "seats"] as const,
+  staff: (libraryId: number) => ["library", libraryId, "staff"] as const,
+  billing: ["billing"] as const,
 };

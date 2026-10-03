@@ -7,9 +7,11 @@ import { useEffect } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { queryClient } from "@/api/queryClient";
+import { configureNotifications } from "@/features/notifications/push";
 import { SessionProvider, useSession } from "@/session/SessionProvider";
 
 void SplashScreen.preventAutoHideAsync();
+configureNotifications();
 
 export default function RootLayout() {
   const [fontsLoaded] = useFonts({
