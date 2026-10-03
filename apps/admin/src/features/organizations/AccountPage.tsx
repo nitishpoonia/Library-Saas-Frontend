@@ -35,7 +35,7 @@ function actionsFor(org: OrganizationDetail): ActionSpec[] {
     action: "revoke-sessions",
     label: "Log out everywhere",
     done: "The owner is logged out on every device.",
-    consequence: `Ends the owner's ${plural(org.activeOwnerSessions, "active login")}. Each phone has to log in again within 15 minutes. Use it for a lost or stolen phone.`,
+    consequence: `Ends the owner's ${plural(org.activeOwnerSessions, "active login")} and stops app notifications to their phones. Each phone has to log in again within 15 minutes. Use it for a lost or stolen phone.`,
   });
   actions.push(
     org.suspended
