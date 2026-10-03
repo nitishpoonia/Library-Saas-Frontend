@@ -64,6 +64,13 @@
     "preset": "jest-expo",
     "testMatch": [
       "<rootDir>/src/**/*.test.ts?(x)"
+    ],
+    "testPathIgnorePatterns": [
+      "/node_modules/",
+      "<rootDir>/apps/"
+    ],
+    "modulePathIgnorePatterns": [
+      "<rootDir>/apps/"
     ]
   }
 }
